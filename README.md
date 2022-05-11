@@ -102,6 +102,7 @@ Frontline requires that there is a SSO integrated with your App in order to sign
   - Set "Workspace ID" to whatever you want (Org/Company Name)
   - Set "Identiy provider issuer" to `https://yourdomain.my.salesforce.com` where you can find the "yourdomain" URL mentioned in the Salesforce console by clicking on the avatar in the top right corner
   - Set "SSO URL" to `https://yourdomain.my.salesforce.com/idp/endpoint/HttpRedirect`
+  - Open your certificate you downloaded in the first step in a text editor and paste the contents inside the "X.509 Certificate" text box.
   - Hit Save
 - You're all done! Now Download the Frontline app in the [iOS App Store](https://apps.apple.com/us/app/twilio-frontline/id1541714273) or [Google Play Store](https://play.google.com/store/apps/details?id=com.twilio.frontline)
 and log in with the Workspace ID from the last step and your Salesforce Account Credentials
