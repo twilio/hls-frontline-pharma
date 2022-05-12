@@ -8,11 +8,14 @@
     "deploy": "twilio-run deploy"
   },
   "dependencies": {
-    "twilio": "^3.56",
-    "@twilio/runtime-handler": "1.2.3"
+    "twilio": "3.75.1",
+    "@twilio-labs/serverless-api": "5.4.1",
+    "@twilio/runtime-handler": "1.2.3",
+    "configure-env": "2.0.0-1",
+    "jsonwebtoken": "8.5.1"
   },
   "devDependencies": {
-    "twilio-run": "^3.4.2"
+    "twilio-run": "3.4.2"
   },
   "engines": {
     "node": "14"

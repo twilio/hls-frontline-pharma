@@ -45,7 +45,8 @@ targets:
 
 
 installer-build-github:
-	docker build --tag $(INSTALLER_NAME) $(DOCKER_EMULATION) --no-cache $(GIT_REPO_URL)#main
+	$(eval BRANCH := $(shell if [[ -z "$(GIT_BRANCH)" ]]; then echo 'main'; else echo $(GIT_BRANCH); fi))
+	docker build --tag $(INSTALLER_NAME) $(DOCKER_EMULATION) --no-cache $(GIT_REPO_URL)#$(BRANCH)
 
 
 installer-build-local:
