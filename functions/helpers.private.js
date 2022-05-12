@@ -75,6 +75,20 @@ async function getParam(context, key) {
       return service.sid;
     }
 
+    case 'SYNC_SID':
+      {
+        const services = await client.sync.services.list();
+        let service = services.find(s => s.friendlyName === context.APPLICATION_NAME);
+        if (! service) {
+          console.log(`Sync service not found so creating a new sync service friendlyName=${context.APPLICATION_NAME}`);
+          service = await client.sync.services.create({ friendlyName: context.APPLICATION_NAME });
+        }
+        if (! service) throw new Error('Unable to create a Twilio Sync Service!!! ABORTING!!!');
+
+        await setParam(context, key, service.sid);
+        return service.sid;
+      }
+
     default:
       throw new Error(`Undefined variable ${key} !!!`);
   }

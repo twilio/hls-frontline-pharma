@@ -25,13 +25,11 @@ exports.handler = async function (context, event, callback) {
     const service_sid        = await getParam(context, 'SERVICE_SID');
     const environment_domain = service_sid ? await getParam(context, 'ENVIRONMENT_DOMAIN') : null;
     const application_url    = service_sid ? `https:/${environment_domain}/index.html` : null;
-    const template_flows     = await check_studio_flow_templates(context);
 
     const response = {
       deploy_state: (service_sid) ? 'DEPLOYED' : 'NOT-DEPLOYED',
       service_sid: service_sid,
       application_url: application_url,
-      template_flows: template_flows,
     };
     console.log(THIS, response);
     return callback(null, response);
@@ -47,27 +45,20 @@ exports.handler = async function (context, event, callback) {
 
 /* --------------------------------------------------------------------------------
  * checks deployment of studio flow template shipped with this application
+ *
+ * includes you calling js file via:
+ *
+ * const { check_a_deployable }  = require(Runtime.getFunctions()['installer/check'].path);
  * --------------------------------------------------------------------------------
  */
-const check_studio_flow_templates = async (context) => {
+const check_a_deployable = async (context) => {
   const client = context.getTwilioClient();
 
   const assets = Runtime.getAssets(); // private assets only
-  const flowsDeployed = await client.studio.flows.list();
-  const templatesDeployed = [];
-  for (const aName of Object.keys(assets)) {
-    if (! aName.startsWith('/flow-')) continue; // skip non studio flow template
-    const tName = aName.replace('/flow-', '').replace('.template.json', '');
 
-    let flow = flowsDeployed.find(f => f.friendlyName === tName);
+  // TODO: check deployment state of deployable
 
-    templatesDeployed.push({
-      asset       : aName,
-      friendlyName: flow ? flow.friendlyName : tName,
-      sid         : flow ? flow.sid : null,
-    })
-  }
-  return templatesDeployed;
+  return {};
 }
 
-exports.check_studio_flow_templates = check_studio_flow_templates;
+exports.check_a_deployable = check_a_deployable;

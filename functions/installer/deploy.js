@@ -36,6 +36,7 @@ exports.handler = async function(context, event, callback) {
 
         console.log(THIS, 'Provisioning dependent Twilio services');
         await getParam(context, 'VERIFY_SID');
+        await getParam(context, 'SYNC_SID');
 
         console.log(THIS, 'Make Twilio service editable ...');
         const client = context.getTwilioClient();
@@ -201,76 +202,32 @@ async function undeploy_service(context) {
 }
 
 
-/* --------------------------------------------------------------------------------
- * deploys studio flow template shipped with this application
- * --------------------------------------------------------------------------------
- */
-async function deploy_studio_flow_templates (context) {
-  const { check_studio_flow_templates }  = require(Runtime.getFunctions()['installer/check'].path);
-
-  const deployed = await check_studio_flow_templates(context);
-  const toDeploy = deployed.filter(t => t.sid === null);
-  for(const t of toDeploy) {
-    const asset = Runtime.getAssets()[t.asset]
-    const flowDefinition = asset.open();
-    const flow = await deploy_studio_flow(context,  t.friendlyName,  flowDefinition);
-    t.sid = flow.sid;
-  }
-
-  return toDeploy;
-}
 
 
 /* --------------------------------------------------------------------------------
- * deploys studio flow
- * . create/update studio flow
+ * (re)deploys a deployable
  * --------------------------------------------------------------------------------
  */
-const deploy_studio_flow = async (context, flowName, flowDefinition) => {
-  const assert = require("assert");
-
+const deploy_a_deployable = async (context) => {
   const client = context.getTwilioClient();
-  // ---------- validate studio flow definition
-  const flowValid = await client.studio.flowValidate.update({
-    friendlyName: flowName,
-    status: 'published',
-    definition: `${flowDefinition}`,
-  });
-  assert(flowValid.valid, `invalid flow definitio for flow=${flowName}!!!`);
 
-  // ---------- deploy studio flow
-  const flowsDeployed = await client.studio.flows.list();
+  // TODO
 
-  const flowDeployed = flowsDeployed.find(f => f.friendlyName === flowName);
-  const flow = flowDeployed
-    ? await client.studio.flows(flowDeployed.sid).update({
-      status: 'published',
-      commitMessage: 'installer deployed',
-      definition: `${flowDefinition}`,
-    })
-    : await client.studio.flows.create({
-      friendlyName: flowName,
-      status: 'published',
-      commitMessage: 'installer deployed',
-      definition: `${flowDefinition}`,
-    });
-
-  return flow;
+  return null;
 }
 
-exports.deploy_studio_flow = deploy_studio_flow;
-
+exports.deploy_a_deployable = deploy_a_deployable;
 
 /* --------------------------------------------------------------------------------
- * undeploys studio flow
+ * undeploys a deployable
  * --------------------------------------------------------------------------------
  */
-const undeploy_studio_flow = async (context, flowSID) => {
+const undeploy_a_deployable = async (context) => {
   const client = context.getTwilioClient();
-  // ---------- remove studio flow, if exists
-  const flow = await client.studio.v2.flows(flowSID).remove();
 
-  return flow;
+  // TODO
+
+  return null;
 }
 
-exports.undeploy_studio_flow = undeploy_studio_flow;
+exports.undeploy_a_deployable = undeploy_a_deployable;
