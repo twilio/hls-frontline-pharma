@@ -20,11 +20,9 @@ exports.handler = async function (context, event, callback) {
         const { connection } = sfdcConnectionIdentity;
         const customerDetails =
           (await getCustomerByNumber(customerNumber, connection)) || {};
-        await twilioClient.conversations
-          .conversations(conversationSid)
-          .update({
-            friendlyName: customerDetails.display_name || customerNumber,
-          });
+        await twilioClient.conversations.conversations(conversationSid).update({
+          friendlyName: customerDetails.display_name || customerNumber,
+        });
       }
       break;
     }
@@ -45,6 +43,20 @@ exports.handler = async function (context, event, callback) {
           customerDetails
         );
       }
+      break;
+    }
+    case "onMessageAdd": {
+      const response = new Twilio.Response();
+      response.appendHeader("Content-Type", "application/json");
+      response.appendHeader("Access-Control-Allow-Origin", "*");
+
+      if (!event.Body) {
+        // if body is null, block the request.
+        response.setBody("");
+        return callback(null, response);
+      }
+
+      // TODO: Finish the functionality for handling message adds.  Should upload conversation to Salesforce
       break;
     }
     default: {
