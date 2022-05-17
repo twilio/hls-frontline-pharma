@@ -25,7 +25,7 @@ echo "TWILIO_ACCOUNT_NAME: ${TWILIO_ACCOUNT_NAME}"
 echo "================================================================================"
 
 
-# ---------- check account is not a flex account
+echo ---------- check account is not a flex account --------------------------------------------------
 set +o errexit
 
 twilio api:flex:v1:configuration:fetch > /dev/null 2>&1
@@ -38,7 +38,7 @@ fi
 
 set -o errexit
 
-# ---------- check organization, manually --------------------------------------------------
+echo ---------- check organization, manually --------------------------------------------------
 while
   echo 'Opening https://www.twilio.com/console/admin ...'
   open -a "Google Chrome" https://www.twilio.com/console/admin
@@ -54,7 +54,7 @@ do :; done
 # TODO programmatically (1) checking organization existence; (2) creating if non-existent using id-organization-service internal API
 
 
-# ---------- check phone number: sms & voice capable US phone number --------------------------------------------------
+echo ---------- check phone number: sms/voice capable US phone number --------------------------------------------------
 # list incoming-phone-numbers of this account
 IP_SID_ARRAY=($(twilio api:core:incoming-phone-numbers:list -o=json | jq --raw-output '.[].sid'))
 if [[ ${IP_SID_ARRAY} == "No results" ]]; then
@@ -68,7 +68,7 @@ if [[ ${IP_SID_ARRAY} != "No results" ]]; then
     SMS_CAPABLE=$(twilio api:core:incoming-phone-numbers:fetch --sid ${sid} -o=json | jq '.[0].capabilities.sms')
     VOX_CAPABLE=$(twilio api:core:incoming-phone-numbers:fetch --sid ${sid} -o=json | jq '.[0].capabilities.voice')
     if [[ "${SMS_CAPABLE}" && "${VOX_CAPABLE}" ]]; then
-      INCOMING_PHONE_NUMBER=$(twilio api:core:incoming-phone-numbers:fetch --sid ${sid} -o=json | jq '.[0].phoneNumber')
+      INCOMING_PHONE_NUMBER=$(twilio api:core:incoming-phone-numbers:fetch --sid ${sid} -o=json | jq --raw-output '.[0].phoneNumber')
       INCOMING_PHONE_SID=${sid}
       echo "Found sms & voice capable incoming phone: ${INCOMING_PHONE_NUMBER} ${INCOMING_PHONE_SID}"
       break
@@ -90,7 +90,7 @@ if [[ -z ${INCOMING_PHONE_SID} ]]; then
 fi
 
 
-# ---------- create frontline service, manually --------------------------------------------------
+echo ---------- create frontline service, manually --------------------------------------------------
 yn="n"
 while
   if [[ "${yn}" == "n" ]]; then
@@ -105,7 +105,7 @@ while
 do :; done
 
 
-# ---------- configure conversations --------------------------------------------------
+echo ---------- configure conversations --------------------------------------------------
 # find conversation service named 'Frontline Service' created from frontline service creation
 # in case there are multiple matching friendlyName, return first match
 FRONTLINE_CONVERSATION_FNAME='Frontline Service'
@@ -149,25 +149,30 @@ DEFAULT_MESSAGING_SERVICE_SID=$(twilio api:conversations:v1:configuration:fetch 
 # - select Twilio phone number INCOMING_PHONE_NUMBER
 # - click "Add Phone Numbers"
 
+
+CONFIGURATION_ADDRESS_SID=$(twilio api:conversations:v1:configuration:addresses:list -o=json \
+| jq --raw-output '.[] | select(.friendlyName == "FrontlineConfiguration") | .sid')
+
 # set auto-create conversation, per user phone number
-twilio api:conversations:v1:configuration:addresses:create \
-  --friendly-name "My Test Configuration" \
-  --auto-creation.enabled  \
-  --auto-creation.type webhook \
-  --auto-creation.conversation-service-sid ${FRONTLINE_CONVERSATION_SID} \
-  --auto-creation.webhook-url https://example.com \
-  --auto-creation.webhook-method POST \
-  --auto-creation.webhook-filters onParticipantAdded onMessageAdded \
-  --type sms \
-  --address +19705362258
+
+if [[ -z "${CONFIGURATION_ADDRESS_SID}" ]]; then
+  twilio api:conversations:v1:configuration:addresses:create \
+    --friendly-name "FrontlineConfiguration" \
+    --auto-creation.enabled  \
+    --auto-creation.type webhook \
+    --auto-creation.conversation-service-sid ${FRONTLINE_CONVERSATION_SID} \
+    --auto-creation.webhook-url https://example.com \
+    --auto-creation.webhook-method POST \
+    --auto-creation.webhook-filters onParticipantAdded onMessageAdded \
+    --type sms \
+    --address ${INCOMING_PHONE_NUMBER}
+  CONFIGURATION_ADDRESS_SID=$(twilio api:conversations:v1:configuration:addresses:list -o=json \
+  | jq --raw-output '.[] | select(.friendlyName == "FrontlineConfiguration") | .sid')
+  echo "Created CONFIGURATION_ADDRESS_SID=${CONFIGURATION_ADDRESS_SID}"
+fi
 
 
-# TODO ---------- configure frontline SSO, manually  --------------------------------------------------
-# need information from SF SSO setup
+echo ---------- Frontline provisioning is complete --------------------------------------------------
+echo . Frontline SSO to Saleforce will be part of Salesforce provisioing
 
-# workspace-id: owl-pharma
-# identiy provider linl: from SF
-# sso url: from SF
-# click 'Save' button on lower left
-
-# open https://www.twilio.com/console/frontline/sso
+echo ---------- Provision Salesforce via ./provision-salesforce.sh --------------------------------------------------
