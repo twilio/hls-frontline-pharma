@@ -2,13 +2,15 @@ const jwt = require("jsonwebtoken");
 const jsforce = require("jsforce");
 const axios = require("axios");
 var querystring = require("querystring");
+const { getParam } = require("../helpers.private");
 
 exports.sfdcAuthenticate = async (context, worker) => {
   const salesforceUsername = worker ? worker : context.SF_USERNAME;
   const twilioClient = context.getTwilioClient();
+  const syncSid = await getParam(context, "SYNC_SID");
   try {
     const syncDoc = await twilioClient.sync
-      .services(context.SYNC_SID)
+      .services(syncSid)
       .documents(salesforceUsername)
       .fetch();
     const connection = new jsforce.Connection({
@@ -74,7 +76,7 @@ const updateTokenCache = async (
 ) => {
   try {
     const createdDocument = await twilioClient.sync
-      .services(context.SYNC_SID)
+      .services(syncSid)
       .documents.create({
         uniqueName: identityInfo.username,
         data: {
@@ -90,7 +92,7 @@ const updateTokenCache = async (
     if (e.status === 409 && e.code === 54301) {
       console.log(e);
       const updatedDocument = await twilioClient.sync
-        .services(context.SYNC_SID)
+        .services(syncSid)
         .documents(identityInfo.username)
         .update({
           data: {
