@@ -88,14 +88,14 @@ Frontline requires that there is a SSO integrated with your App in order to sign
   - Set "Name ID Format" to `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`
   - Set "Issuer" to `https://yourdomain.my.salesforce.com`
     - The above url can be found by click on your avatar in the top right corner of the Salesforce Console
-  - Set "IdP Certificat" to the you created in the first step
+  - Set "IdP Certificat" to the you created in the first step (ex. SalesforceSSO)
   - Untick "Verify Request Signatures" and "Encrypt SAML Response"
   - Hit Save
 - Add Custom Attributes
   - Now in the left panel, navigate to Platform Tools -> Apps -> Connected Apps -> Manage Connected Apps
   - Click on your App
   - Scroll to the bottom where it says "Custom Attributes" and click "New"
-  - "Attribute Key" should be "roles", and the large Text box should be 'agent' (with single quotes)
+  - "Attribute Key" should be "roles" (excluding the double quotes), and the large Text box should be 'agent' (including the single quotes)
   - Hit Save
 - Assign Profile Access to the Connected App
   - Depending on who you would like to access your App, you'll want to grant access to all Salesforce Users who you would like to SSO into Frontline
