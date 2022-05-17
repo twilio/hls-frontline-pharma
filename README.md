@@ -55,6 +55,7 @@ Frontline requires that there is a SSO integrated with your App in order to sign
 
 - First, sign-up for a Salesforce Developer account [here](https://developer.salesforce.com/signup)
 - Next we'll need to Create a self-signed certificate in Salesforce
+  - In the SalesForce console, go to Setup by clicking the gear icon in the menu bar
   - On the Left Panel go to Settings -> Security -> Certificate and Key Management
   - Click "Create Self-Signed Certificate"
   - Label and Unique name can be the same (ex: SalesforceSSO)
