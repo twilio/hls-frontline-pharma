@@ -26,7 +26,7 @@ exports.handler = async function (context, event, callback) {
           });
         } else {
           response.setBody({
-            proxy_address: outboundNumber || context.SMS_NUMBER,
+            proxy_address: outboundNumber || context.TWILIO_PHONE_NUMBER,
           });
         }
         break;

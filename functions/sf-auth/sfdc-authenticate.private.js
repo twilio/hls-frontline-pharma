@@ -2,17 +2,15 @@ const jwt = require("jsonwebtoken");
 const jsforce = require("jsforce");
 const axios = require("axios");
 var querystring = require("querystring");
-<<<<<<< Updated upstream
-=======
 const { getParam } = require(Runtime.getFunctions()["helpers"].path);
->>>>>>> Stashed changes
 
 exports.sfdcAuthenticate = async (context, worker) => {
   const salesforceUsername = worker ? worker : context.SF_USERNAME;
   const twilioClient = context.getTwilioClient();
+  const syncSid = await getParam(context, "SYNC_SID");
   try {
     const syncDoc = await twilioClient.sync
-      .services(context.SYNC_SERVICE_SID)
+      .services(syncSid)
       .documents(salesforceUsername)
       .fetch();
     const connection = new jsforce.Connection({

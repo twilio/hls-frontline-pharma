@@ -18,13 +18,20 @@ This section details the requirements for a successful deployment and installati
 ***
 The following prerequisites must be satisfied prior to installing the application.
 
-#### Twilio account
+#### Frontline Twilio account
 
   - Create a Twilio account by signing up [here](https://www.twilio.com/try-twilio)
   - Once the Twilio account is created,
     please note the “ACCOUNT SID” and “AUTH TOKEN”
     from the [Twilio console](https://console.twilio.com/) for use below
   - If you have multiple Twilio Projects under your account, make sure that you are logged into the Project that you want the application to be deployed to
+  - Search for "Frontline" in the search bar at the top of the Twilio console and select "Overview" in the results
+  - Click the "Create Frontline Service" button
+
+### Download SalesForce CLI
+
+  - Install [this](https://developer.salesforce.com/tools/sfdxcli) tool.
+  - To verify installation, go to a terminal and run `sdfx -v`. If a version number is printed, you have installed the CLI correctly.
 
 #### Twilio phone number
 
@@ -49,12 +56,13 @@ the existing functions service to ensure a conflict doesn’t occur during insta
 You can delete the existing Functions service via executing `make delete`
 in the application directory `hls-frontline-pharma` using a terminal or a command prompt.
 
-#### Salesforce SSO (Salesforce Single-Sign On)
+#### Salesforce Setup
 
 Frontline requires that there is a SSO integrated with your App in order to sign in to the Frontline app. For that we'll need a main Salesforce Developer Account.  Ensure that you have already signed up for a Twilio Account and created a bare Twilio Frontline Service within that account.
 
 - First, sign-up for a Salesforce Developer account [here](https://developer.salesforce.com/signup)
 - Next we'll need to Create a self-signed certificate in Salesforce
+  - In the SalesForce console, go to Setup by clicking the gear icon in the menu bar
   - On the Left Panel go to Settings -> Security -> Certificate and Key Management
   - Click "Create Self-Signed Certificate"
   - Label and Unique name can be the same (ex: SalesforceSSO)
@@ -65,6 +73,10 @@ Frontline requires that there is a SSO integrated with your App in order to sign
   - In Salesforce on the left navigation panel, go to Settings -> Identity -> Identity Provider
   - Press "Enable Identity Provider"
   - Find the certificate You created previously with the unique name you gave it and hit save
+- Get your Twilio Frontline Realm SID
+  - In the [Twilio Console](https://console.twilio.com/?frameUrl=/console), search for "Frontline" in the search bar at the top of the page and select "Overview"
+  - On the left bar, select Manage > SSO/Log in
+  - Copy your Realm SID (i.e. JBccd16179731fe20736f887e6eXXXXXXX)
 - Create a Connected App in Salesforce for Frontline
   - On the left-hand panel, navigate to Platform Tools -> Apps -> App Manager
   - Press "New Connected App"
@@ -72,24 +84,34 @@ Frontline requires that there is a SSO integrated with your App in order to sign
     - Connected App Name
     - API Name
     - Contact Email
-  - Hit Save at the bottom
-- Configure The Web App Settings
-  - After hitting Save described in the previous section, scroll down to the "Web App Settings" portion and tick "Enable SAML"
-  - Set "Entity Id" to `https://iam.twilio.com/v2/saml2/metadata/<REALM_SID>` where `REALM_SID`, in the form of `JBxxxxxxx`, can be found in your Twilio Frontline Console.
-    - From the Twilio Frontline Console, the path, Frontline -> Manage -> SSO/Log in, should have your Realm SID
-  - Set "ACS URL" to `https://iam.twilio.com/v2/saml2/authenticate/<REALM_SID>`
-  - Set "Subject Type" to `Username`
-  - Set "Name ID Format" to `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`
-  - Set "Issuer" to `https://yourdomain.my.salesforce.com`
-    - The above url can be found by click on your avatar in the top right corner of the Salesforce Console
-  - Set "IdP Certificat" to the you created in the first step
-  - Untick "Verify Request Signatures" and "Encrypt SAML Response"
-  - Hit Save
+  - Scroll down to "API (Enable OAuth Settings)" and tick "Enable OAuth Settings"
+    - Paste `https://login.salesforce.com/services/oauth2/success` into "Callback URL"
+    - In "Available OAuth Scopes" select both Manage user data via APIs (api) and Perform requests at any time (refresh_token, offline_accss) and add them to "Selected OAuth Scopes" with the Add arrow
+    - Create server.crt and server.key files using [these](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_auth_key_and_cert.htm) instructions
+    - Tick "Use digital signatures" and select Choose File, selecting server.crt that you just created
+    - In a terminal window, run the following code, replacing the variables in triangular brackets:
+
+```bash
+sfdx auth:jwt:grant --clientid <your_consumer_key> \
+--jwtkeyfile <path_to_server.key> --username <your_sf_username> \
+--setdefaultdevhubusername --setalias <your_org_name>
+```
+
+    - Scroll down to the "Web App Settings" portion and tick "Enable SAML"
+    - Set "Entity Id" to `https://iam.twilio.com/v2/saml2/metadata/<REALM_SID>` replacing <REALM_SID> with what you recorded in the previous section.
+    - Set "ACS URL" to `https://iam.twilio.com/v2/saml2/authenticate/<REALM_SID>`
+    - Set "Subject Type" to `Username`
+    - Set "Name ID Format" to `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`
+    - Set "Issuer" to `https://yourdomain.my.salesforce.com`
+      - The above url can be found by click on your avatar in the top right corner of the Salesforce Console
+    - Set "IdP Certificat" to the you created in the first step (ex. SalesforceSSO)
+    - Untick "Verify Request Signatures" and "Encrypt SAML Response"
+    - Hit Save
 - Add Custom Attributes
   - Now in the left panel, navigate to Platform Tools -> Apps -> Connected Apps -> Manage Connected Apps
   - Click on your App
   - Scroll to the bottom where it says "Custom Attributes" and click "New"
-  - "Attribute Key" should be "roles", and the large Text box should be 'agent' (with single quotes)
+  - "Attribute Key" should be "roles" (excluding the double quotes), and the large Text box should be 'agent' (including the single quotes)
   - Hit Save
 - Assign Profile Access to the Connected App
   - Depending on who you would like to access your App, you'll want to grant access to all Salesforce Users who you would like to SSO into Frontline
@@ -97,7 +119,7 @@ Frontline requires that there is a SSO integrated with your App in order to sign
     - Select the profile that you want to grant a user, for our case, the Salesforce Account creator would be "System Administrator" so find and click that
     - Scroll down to "Connected App Access" and tick the Connected App Name we created in the previous steps
     - Now Hit Save
-- Setup SSO in Frontline (Last Step!)
+- Setup SSO in Frontline
   - In the Twilio console, on the left panel, navigate to Frontline -> Manage -> SSO/Log in
   - Set "Workspace ID" to whatever you want (Org/Company Name)
   - Set "Identiy provider issuer" to `https://yourdomain.my.salesforce.com` where you can find the "yourdomain" URL mentioned in the Salesforce console by clicking on the avatar in the top right corner
@@ -106,6 +128,9 @@ Frontline requires that there is a SSO integrated with your App in order to sign
   - Hit Save
 - You're all done! Now Download the Frontline app in the [iOS App Store](https://apps.apple.com/us/app/twilio-frontline/id1541714273) or [Google Play Store](https://play.google.com/store/apps/details?id=com.twilio.frontline)
 and log in with the Workspace ID from the last step and your Salesforce Account Credentials
+
+#### Configuring Twilio to Work with Your SalesForce Instance
+
 
 #### Docker Desktop
 

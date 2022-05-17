@@ -20,7 +20,6 @@ endif
 # ---------- variables
 APPLICATION_NAME := $(shell basename `pwd`)
 SERVICE_UNAME    := $(APPLICATION_NAME)
-VERIFY_FNAME     := $(APPLICATION_NAME)
 INSTALLER_NAME   := hls-frontline-pharma-installer
 GIT_REPO_URL     := $(shell git config --get remote.origin.url)
 CPU_HARDWARE     := $(shell uname -m)
@@ -35,7 +34,6 @@ $(info TWILIO_ACCOUNT_NAME: $(shell twilio api:core:accounts:fetch --sid=$(TWILI
 $(info TWILIO_ACCOUNT_SID : $(TWILIO_ACCOUNT_SID))
 $(info TWILIO_AUTH_TOKEN  : $(shell echo $(TWILIO_AUTH_TOKEN) | sed 's/./*/g'))
 $(info SERVICE_UNAME      : $(SERVICE_UNAME))
-$(info VERIFY_FNAME       : $(VERIFY_FNAME))
 $(info ================================================================================)
 
 
@@ -95,27 +93,20 @@ get-environment-sid: get-service-sid
 	@[[ ! -z "$(ENVIRONMENT_SID)" ]]
 
 
-get-verify-sid:
-	$(eval VERIFY_SID := $(shell twilio api:verify:v2:services:list -o=json \
-	| jq --raw-output '.[] | select(.friendlyName == "$(VERIFY_FNAME)") | .sid'))
-	@if [[ ! -z "$(VERIFY_SID)" ]]; then \
-      echo "VERIFY_SID=$(VERIFY_SID)"; \
-    else \
-	  echo "$@: Service named $(VERIFY_FNAME) is not deployed!!!"; \
-	fi
-
-
 make-service-editable: get-service-sid
 	twilio api:serverless:v1:services:update --sid=$(SERVICE_SID) --ui-editable -o=json
 
-
-deploy-service: get-verify-sid
-	rm .twiliodeployinfo
-
-	if [[ -z "$(VERIFY_SID)" ]]; then \
-	  twilio api:verify:v2:services:create --friendly-name=$(VERIFY_FNAME) -o=json; \
+run-serverless:
+	npm install
+	@if [[ ! -f .env.localhost ]]; then \
+      echo ".env.localhost needs to be copied from .env and value set!!! aborting..."; \
     fi
+	@[[ -f .env.localhost ]]
+	twilio serverless:start --env=.env.localhost
 
+
+deploy-service: 
+	rm -f .twiliodeployinfo
 	twilio serverless:deploy --runtime node14 --override-existing-project
 
 
@@ -126,57 +117,7 @@ confirm-delete:
 
 undeploy-service: confirm-delete get-service-sid get-verify-sid
 	twilio api:serverless:v1:services:remove --sid $(SERVICE_SID)
-
-	if [[ ! -z "$(VERIFY_SID)" ]]; then \
-	  twilio api:verify:v2:services:remove --sid=$(VERIFY_FNAME) -o=json; \
-    fi
-
 	rm -f .twiliodeployinfo
-
-
-get-flow-sid:
-	$(eval FLOW_SID := $(shell twilio api:studio:v2:flows:list -o=json \
-	| jq --raw-output '.[] | select(.friendlyName == "$(FLOW_FNAME)") | .sid'))
-
-
-deploy-flow: get-flow-sid
-	@if [[ -z "$(FLOW_FNAME)" || -z "$(FLOW_DEFINITION_FILE)" ]]; then \
-  	  echo 'Usage: make deploy-flow FLOW_FNAME={your-flow-fname} FLOW_DEFINITION_FILE={path-to-flow-json-file}'; \
-  	  exit 1; \
-  	fi
-
-	@echo "validating flow definition for flow=$(FLOW_FNAME)"
-	twilio api:studio:v2:flows:validate:create \
-	   --friendly-name $(FLOW_FNAME) \
-	   --status 'published' \
-	   --definition "`cat $(FLOW_DEFINITION_FILE)`"
-
-	@if [[ -z "$(FLOW_SID)" ]]; then \
-	  echo "creating flow=$(FLOW_FNAME)"; \
-	  twilio api:studio:v2:flows:create \
-	  --friendly-name $(FLOW_FNAME) \
-	  --status 'published' \
-	  --commit-message 'deployed via installer' \
-	  --definition "`cat $(FLOW_DEFINITION_FILE)`"; \
-    else \
-	  echo "updating flow=$(FLOW_FNAME)"; \
-	  twilio api:studio:v2:flows:update \
-	  --sid $(FLOW_SID) \
-	  --status 'published' \
-	  --commit-message 'deployed via installer' \
-	  --definition "`cat $(FLOW_DEFINITION_FILE)`"; \
-    fi
-
-
-undeploy-flow: get-flow-sid
-	@if [[ -z "$(FLOW_FNAME)" ]]; then \
-  	  echo 'Usage: make deploy-flow FLOW_FNAME={your-flow-fname}'; \
-	  exit 1; \
-	fi
-
-	echo "deleting flow=$(FLOW_FNAME)";
-	twilio api:studio:v2:flows:remove --sid $(FLOW_SID)
-
 
 deploy-all:  deploy-service make-service-editable
 	@echo deployed and configured!
