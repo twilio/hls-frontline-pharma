@@ -18,13 +18,15 @@ This section details the requirements for a successful deployment and installati
 ***
 The following prerequisites must be satisfied prior to installing the application.
 
-#### Twilio account
+#### Frontline Twilio account
 
   - Create a Twilio account by signing up [here](https://www.twilio.com/try-twilio)
   - Once the Twilio account is created,
     please note the “ACCOUNT SID” and “AUTH TOKEN”
     from the [Twilio console](https://console.twilio.com/) for use below
   - If you have multiple Twilio Projects under your account, make sure that you are logged into the Project that you want the application to be deployed to
+  - Search for "Frontline" in the search bar at the top of the Twilio console and select "Overview" in the results
+  - Click the "Create Frontline Service" button
 
 #### Twilio phone number
 
@@ -49,6 +51,8 @@ the existing functions service to ensure a conflict doesn’t occur during insta
 You can delete the existing Functions service via executing `make delete`
 in the application directory `hls-frontline-pharma` using a terminal or a command prompt.
 
+#### Create a Frontline ac
+
 #### Salesforce SSO (Salesforce Single-Sign On)
 
 Frontline requires that there is a SSO integrated with your App in order to sign in to the Frontline app. For that we'll need a main Salesforce Developer Account.  Ensure that you have already signed up for a Twilio Account and created a bare Twilio Frontline Service within that account.
@@ -66,6 +70,10 @@ Frontline requires that there is a SSO integrated with your App in order to sign
   - In Salesforce on the left navigation panel, go to Settings -> Identity -> Identity Provider
   - Press "Enable Identity Provider"
   - Find the certificate You created previously with the unique name you gave it and hit save
+- Get your Twilio Frontline Realm SID
+  - In the [Twilio Console](https://console.twilio.com/?frameUrl=/console), search for "Frontline" in the search bar at the top of the page and select "Overview"
+  - On the left bar, select Manage > SSO/Log in
+  - Copy your Realm SID (i.e. JBccd16179731fe20736f887e6eXXXXXXX)
 - Create a Connected App in Salesforce for Frontline
   - On the left-hand panel, navigate to Platform Tools -> Apps -> App Manager
   - Press "New Connected App"
@@ -73,11 +81,8 @@ Frontline requires that there is a SSO integrated with your App in order to sign
     - Connected App Name
     - API Name
     - Contact Email
-  - Hit Save at the bottom
-- Configure The Web App Settings
-  - After hitting Save described in the previous section, scroll down to the "Web App Settings" portion and tick "Enable SAML"
-  - Set "Entity Id" to `https://iam.twilio.com/v2/saml2/metadata/<REALM_SID>` where `REALM_SID`, in the form of `JBxxxxxxx`, can be found in your Twilio Frontline Console.
-    - From the Twilio Frontline Console, the path, Frontline -> Manage -> SSO/Log in, should have your Realm SID
+  - Scroll down to the "Web App Settings" portion and tick "Enable SAML"
+  - Set "Entity Id" to `https://iam.twilio.com/v2/saml2/metadata/<REALM_SID>` replacing <REALM_SID> with what you recorded in the previous section.
   - Set "ACS URL" to `https://iam.twilio.com/v2/saml2/authenticate/<REALM_SID>`
   - Set "Subject Type" to `Username`
   - Set "Name ID Format" to `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`
