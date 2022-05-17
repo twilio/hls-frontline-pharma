@@ -8,7 +8,7 @@ exports.sfdcAuthenticate = async (context, worker) => {
   const twilioClient = context.getTwilioClient();
   try {
     const syncDoc = await twilioClient.sync
-      .services(context.SYNC_SERVICE_SID)
+      .services(context.SYNC_SID)
       .documents(salesforceUsername)
       .fetch();
     const connection = new jsforce.Connection({
@@ -74,7 +74,7 @@ const updateTokenCache = async (
 ) => {
   try {
     const createdDocument = await twilioClient.sync
-      .services(context.SYNC_SERVICE_SID)
+      .services(context.SYNC_SID)
       .documents.create({
         uniqueName: identityInfo.username,
         data: {
@@ -90,7 +90,7 @@ const updateTokenCache = async (
     if (e.status === 409 && e.code === 54301) {
       console.log(e);
       const updatedDocument = await twilioClient.sync
-        .services(context.SYNC_SERVICE_SID)
+        .services(context.SYNC_SID)
         .documents(identityInfo.username)
         .update({
           data: {

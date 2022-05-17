@@ -31,7 +31,7 @@ const routeConversation = async (
   if (!workerIdentity) {
     // Customer doesn't have a worker
     // Select a default worker
-    workerIdentity = context.DEFAULT_WORKER;
+    workerIdentity = context.SF_USERNAME;
   }
   await routeConversationToWorker(
     twilioClient,
