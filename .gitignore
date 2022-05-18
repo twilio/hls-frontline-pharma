@@ -129,3 +129,4 @@ dist
 server.private.key
 
 .vscode
+.env.local
