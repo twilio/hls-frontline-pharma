@@ -41,7 +41,7 @@ exports.parseContactsForCompositeApi = function (csvData, accountMap) {
       Department: record.Department,
       Email: record.Email,
       HomePhone: record.HomePhone,
-      MobilePhone: record.MobilePhone,
+      MobilePhone: record.Mobile,
       LeadSource: record.LeadSource, //picklist
       Phone: record.Phone,
       MailingStreet: record.MailingStreet,
