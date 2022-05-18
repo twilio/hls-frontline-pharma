@@ -4,7 +4,7 @@ const sfdcAuthenticatePath =
   Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
 const parseSObjectsPath = Runtime.getFunctions()["seeding/parse-sobjects"].path;
 const readCsvPath = Runtime.getFunctions()["seeding/read-csv"].path;
-const uploadPath = Runtime.getFunctions()["seeding/upload"].path;
+const uploadPath = Runtime.getFunctions()["seeding/sobject"].path;
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
 const {
   parseAccountsForCompositeApi,

@@ -93,6 +93,12 @@ get-environment-sid: get-service-sid
 	@[[ ! -z "$(ENVIRONMENT_SID)" ]]
 
 
+reset-data: 
+	curl -X POST http://localhost:3000/seeding/reset
+
+seed-data: 
+	curl -X POST http://localhost:3000/seeding/seed
+
 make-service-editable: get-service-sid
 	twilio api:serverless:v1:services:update --sid=$(SERVICE_SID) --ui-editable -o=json
 
