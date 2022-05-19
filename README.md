@@ -149,17 +149,28 @@ sfdx auth:jwt:grant --clientid <your_consumer_key> \
   - Open your certificate you downloaded in the first step in a text editor and paste the contents inside the "X.509 Certificate" text box.
   - Hit Save
 - Deploy your Serverless Project which are the functions in this repo
+  - First take the `server.key` file in the `/JWT` directory we created in a previous step and move it to the `/assets` folder of this repo and rename `server.key` to `server.private.key` (This is the Salesforce key which will be cached inside Twilio Sync)
+  - Fill out all the fields in `.env` file (SYNC_SID optional as it will be created)
   - run `make service-deploy` at the root level of this directory which deploys your serverless functions needed to connect Frontline and Salesforce
-  - Take note of 3 [protected] endpoints after the deployment completes needed for the next step:
+  - Take note of 4 [protected] endpoints after the deployment completes needed for the next 2 steps:
+    - `https://hls-frontline-pharma-XXXX-dev.twil.io/inbound-routing`
     - `https://hls-frontline-pharma-XXXX-dev.twil.io/crm`
     - `https://hls-frontline-pharma-XXXX-dev.twil.io/outgoing-conversation`
     - `https://hls-frontline-pharma-XXXX-dev.twil.io/templates`
+- Configure Inbound Routing
+  - On your Frontline console, navigate to Frontline -> Manage -> Routing
+  - Click on "Custom routing callback URL" and fill in the URL with the first URL above which ends in "/inbound-routing"
 - Finish Configuring/Connecting your CRM
   - Go to Frontline Overview
   - Step 4 should be the last step to complete now click it
   - Fill in the 3 callback URLs from the previous step and click save
 - You're all done! Now Download the Frontline app in the [iOS App Store](https://apps.apple.com/us/app/twilio-frontline/id1541714273) or [Google Play Store](https://play.google.com/store/apps/details?id=com.twilio.frontline)
   and log in with the Workspace ID from the last step and your Salesforce Account Credentials
+
+#### Common Problems/Errors:
+
+- Outbound routing is not working:
+  - Usually happens when a Salesforce Contact's phone number is not in E. 164 Format "+1234567890"
 
 #### Configuring Twilio to Work with Your SalesForce Instance
 
