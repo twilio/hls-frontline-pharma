@@ -1,18 +1,23 @@
 const accountsDataPath = Runtime.getAssets()["/accounts_data.csv"].path;
 const contactsDataPath = Runtime.getAssets()["/contacts_data.csv"].path;
+const templatesDataPath = Runtime.getAssets()["/templates_data.csv"].path;
+const helperPath = Runtime.getFunctions()["helpers"].path;
+const { getParam } = require(helperPath);
 const sfdcAuthenticatePath =
   Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
-const parseSObjectsPath = Runtime.getFunctions()["seeding/parse-sobjects"].path;
-const readCsvPath = Runtime.getFunctions()["seeding/read-csv"].path;
-const uploadPath = Runtime.getFunctions()["seeding/upload"].path;
+  const crmPath = Runtime.getFunctions()["crm"].path
+const parseSObjectsPath = Runtime.getFunctions()["seeding/parsing"].path;
+const sobjectPath = Runtime.getFunctions()["seeding/sobject"].path;
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
 const {
+  readCsv,
   parseAccountsForCompositeApi,
   parseContactsForCompositeApi,
+  parseTemplates,
 } = require(parseSObjectsPath);
-const { readCsv } = require(readCsvPath);
-const { bulkUploadSObjects } = require(uploadPath);
+const { bulkUploadSObjects } = require(sobjectPath);
 
+/** Reads Account, Contact, and Conversation data out of CSVs and parses them into SObject format, */
 exports.handler = async function (context, event, callback) {
   const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
   const { connection } = sfdcConnectionIdentity;
@@ -25,6 +30,7 @@ exports.handler = async function (context, event, callback) {
   response.appendHeader("Content-Type", "application/json");
   response.setStatusCode(200);
   try {
+    const endpoint = await getParam(context, "SFDC_INSTANCE_URL")
     //read csv data
     const accountsData = await readCsv(accountsDataPath);
     const contactsData = await readCsv(contactsDataPath);
@@ -33,6 +39,8 @@ exports.handler = async function (context, event, callback) {
     const parsedAccounts = parseAccountsForCompositeApi(accountsData);
     const accountUploadResult = await bulkUploadSObjects(
       context,
+      "v53.0",
+      endpoint,
       connection,
       parsedAccounts,
       true
@@ -45,9 +53,11 @@ exports.handler = async function (context, event, callback) {
         accountUploadResult.result.find((record) => !record.success))
     ) {
       response.setStatusCode(400);
-      response.setBody(
-        "There was an error uploading at least one account to SalesForce."
-      );
+      response.setBody({
+        error: true,
+        result:
+          "There was an error uploading at least one account to SalesForce.",
+      });
       return callback(null, response);
     }
 
@@ -65,6 +75,8 @@ exports.handler = async function (context, event, callback) {
 
     const contactUploadResult = await bulkUploadSObjects(
       context,
+      "v53.0",
+      endpoint,
       connection,
       parsedContacts,
       true
@@ -78,18 +90,41 @@ exports.handler = async function (context, event, callback) {
     ) {
       response.setStatusCode(400);
       response.setBody(
-        "There was an error uploading at least one contact to SalesForce."
+        response.setBody({
+          error: true,
+          errorObject: new Error(
+            "There was an error uploading at least one contact to SalesForce."
+          ),
+        })
       );
       return callback(null, response);
     }
 
     response.setStatusCode(200);
-    response.setBody(contactUploadResult);
+    response.setBody({ error: false, result: contactUploadResult });
   } catch (err) {
     console.log(err);
     response.setStatusCode(500);
-    response.setBody("Server error.");
+    response.setBody({ error: true, errorObject: new Error("Server error.") });
   }
 
   return callback(null, response);
+};
+
+exports.makeTemplateArray = async function (customerDetails) {
+  try {
+    const templatesData = await readCsv(templatesDataPath);
+    return parseTemplates(templatesData, customerDetails);
+  } catch (err) {
+    console.log(`Could not get templates, using defaults: ${err.message}`);
+    return [
+      {
+        display_name: "Meeting Reminders",
+        templates: [
+          { content: "Default message" },
+          { content: "Default message 2" },
+        ],
+      },
+    ];
+  }
 };

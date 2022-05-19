@@ -1,22 +1,28 @@
+const templatesPath = Runtime.getFunctions()["seeding/seed"].path;
+const {makeTemplateArray} = require(templatesPath) 
+const sfdcAuthenticatePath =
+  Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
+const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
+
 exports.handler = async function (context, event, callback) {
   let response = new Twilio.Response();
-  response.appendHeader('Content-Type', 'application/json');
+  response.appendHeader("Content-Type", "application/json");
   try {
-    console.log('Frontline user identity: ' + event.Worker);
-      switch (event.Location) {
-        case 'GetTemplatesByCustomerId': {
-          response.setBody(
-            [
-              getTemplatesByCustomerId(event.CustomerId)
-            ]
-          );
-          break;
-        } default: {
-          console.log('Unknown Location: ', event.Location);
-          res.setStatusCode(422);
-        }
+    const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
+    const { connection } = sfdcConnectionIdentity;
+    const customerDetails =
+      (await getCustomerById(event.Id, connection)) || {};
+    switch (event.Location) {
+      case "GetTemplatesByCustomerId": {
+        response.setBody(await makeTemplateArray(customerDetails));
+        break;
       }
-      return callback(null, response);
+      default: {
+        console.log("Unknown Location: ", event.Location);
+        res.setStatusCode(422);
+      }
+    }
+    return callback(null, response);
   } catch (e) {
     console.error(e);
     response.setStatusCode(500);
@@ -24,29 +30,29 @@ exports.handler = async function (context, event, callback) {
   }
 };
 
-const getTemplatesByCustomerId = (contactId) => {
-  console.log('Getting Customer templates: ', contactId);
-  return {
-    display_name: 'Meeting Reminders',
-    templates: [
-      { "content": MEETING_CONFIRM_TODAY, whatsAppApproved: true },
-      { "content": MEETING_CONFIRM_TOMORROW }
-    ]
-  };
+async function getCustomerById(number, sfdcConn) {
+  console.log("Getting Customer details by #: ", number);
+  let sfdcRecords = [];
+  try {
+    sfdcRecords = await sfdcConn
+      .sobject("Contact")
+      .find(
+        {
+          Id: number,
+        },
+      )
+      .sort({ LastModifiedDate: -1 })
+      .limit(1)
+      .execute();
+    console.log(
+      "Fetched # SFDC records for contact by #: " + sfdcRecords.length
+    );
+    console.log(sfdcRecords)
+    if (sfdcRecords.length === 0) {
+      return;
+    }
+    return sfdcRecords[0];
+  } catch (err) {
+    console.error(err);
+  }
 };
-
-const getTodaysDate = () => {
-  const today = new Date();
-  console.log(today.toDateString());
-  return today.toDateString();
-};
-
-const getTomorrowsDate = () => {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  console.log(tomorrow.toDateString());
-  return tomorrow.toDateString();
-};
-
-const MEETING_CONFIRM_TODAY = `Just a reminder that our meeting is scheduled for today on ${getTodaysDate()}`;
-const MEETING_CONFIRM_TOMORROW = `Just a reminder that our meeting is scheduled for tomorrow on ${getTomorrowsDate()}`;

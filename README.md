@@ -112,23 +112,22 @@ Frontline requires that there is a SSO integrated with your App in order to sign
       - Your <your_sf_username> can be found by clicking on your avatar in the top right corner and clicking on "Settings"
       - <your_org_name> is usually what you entered when you did the cert step above
 
-```bash
-sfdx auth:jwt:grant --clientid <your_consumer_key> \
---jwtkeyfile <path_to_server.key> --username <your_sf_username> \
---setdefaultdevhubusername --setalias <your_org_name>
-```
+  ```bash
+  sfdx auth:jwt:grant --clientid <your_consumer_key> \
+  --jwtkeyfile <path_to_server.key> --username <your_sf_username> \
+  --setdefaultdevhubusername --setalias <your_org_name>
+  ```
 
 - Scroll down to the "Web App Settings" portion and tick "Enable SAML"
-- Set "Entity Id" to `https://iam.twilio.com/v2/saml2/metadata/<REALM_SID>` replacing <REALM_SID> with what you recorded in the previous section.
-- Set "ACS URL" to `https://iam.twilio.com/v2/saml2/authenticate/<REALM_SID>`
-- Set "Subject Type" to `Username`
-- Set "Name ID Format" to `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`
-- Set "Issuer" to `https://yourdomain.my.salesforce.com`
-  - The above url can be found by click on your avatar in the top right corner of the Salesforce Console
-- Set "IdP Certificate" to the you created in the first step (ex. SalesforceSSO)
-- Untick "Verify Request Signatures" and "Encrypt SAML Response"
-- Hit Save
-
+  - Set "Entity Id" to `https://iam.twilio.com/v2/saml2/metadata/<REALM_SID>` replacing <REALM_SID> with what you recorded in the previous section.
+  - Set "ACS URL" to `https://iam.twilio.com/v2/saml2/authenticate/<REALM_SID>`
+  - Set "Subject Type" to `Username`
+  - Set "Name ID Format" to `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`
+  - Set "Issuer" to `https://yourdomain.my.salesforce.com`
+    - The above url can be found by click on your avatar in the top right corner of the Salesforce Console
+  - Set "IdP Certificate" to the you created in the first step (ex. SalesforceSSO)
+  - Untick "Verify Request Signatures" and "Encrypt SAML Response"
+  - Hit Save
 - Add Custom Attributes
   - Now in the left panel, navigate to Platform Tools -> Apps -> Connected Apps -> Manage Connected Apps
   - Click on your App

@@ -25,11 +25,27 @@ exports.handler = async function (context, event, callback) {
     const service_sid        = await getParam(context, 'SERVICE_SID');
     const environment_domain = service_sid ? await getParam(context, 'ENVIRONMENT_DOMAIN') : null;
     const application_url    = service_sid ? `https:/${environment_domain}/index.html` : null;
+    const service_url        = service_sid ? `https://www.twilio.com/console/functions/api/start/${service_sid}` : null;
+    const frontline_url      = service_sid ? 'https://www.twilio.com/console/frontline': null;
+    let salesforce_url = null;
+    if (service_sid) {
+      const environment_sid = await getParam(context, 'ENVIRONMENT_SID');
+      const client = context.getTwilioClient();
+      const variables = await client.serverless
+        .services(service_sid)
+        .environments(environment_sid)
+        .variables.list();
+      const variable = variables.find(v => v.key === 'SFDC_INSTANCE_URL');
+      if (variable) salesforce_url = variable.value;
+    }
 
     const response = {
       deploy_state: (service_sid) ? 'DEPLOYED' : 'NOT-DEPLOYED',
       service_sid: service_sid,
       application_url: application_url,
+      service_url: service_url,
+      frontline_url: frontline_url,
+      salesforce_url: salesforce_url,
     };
     console.log(THIS, response);
     return callback(null, response);
