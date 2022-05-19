@@ -111,3 +111,52 @@ exports.parseTemplates = function (csvData, customerDetails) {
     };
   });
 };
+
+exports.parseChatHistory = function (csvData, contactsMap) {
+  //csvData: conversation_sid,	message_index,	author,	body,	date_created
+
+  const result = [];
+  const groups = col.groupBy(csvData, (record) => record.conversation_sid);
+
+  console.log(groups);
+
+  Object.values(groups).forEach((group) => {
+    const orderedGroup = col.orderBy(group, ["message_index"], ["asc"]);
+
+    console.log(orderedGroup);
+
+    const participant = orderedGroup.find(
+      (item) => item.author.trim() !== "Sales Rep"
+    );
+    const id = contactsMap.find((contact) =>
+      participant.author.includes(contact.name)
+    ).sfId;
+
+    if (id) {
+      const description = orderedGroup.reduce(
+        (prev, curr, index) =>
+          [
+            prev,
+            `[${curr.author} @ ${curr.date_created}]\n${curr.body}`,
+            index != group.length - 1 ? "\n\n" : "",
+          ]
+            .join(""), //replace start/end quotations.
+        ""
+      );
+      result.push({
+        attributes: {
+          type: "Event",
+        },
+        Description: description,
+        EndDateTime: orderedGroup[orderedGroup.length - 1].date_created,
+        IsAllDayEvent: false,
+        WhoId: id,
+        StartDateTime: orderedGroup[0].date_created,
+        Subject: "SMS",
+        Type: "Other",
+      });
+    }
+  }, "");
+
+  return result;
+};
