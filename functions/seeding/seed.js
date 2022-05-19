@@ -14,7 +14,6 @@ const {
   parseTemplates,
 } = require(parseSObjectsPath);
 const { bulkUploadSObjects } = require(sobjectPath);
-const { getCustomerDetailsByCustomerIdCallback } = require(crmPath)
 
 /** Reads Account, Contact, and Conversation data out of CSVs and parses them into SObject format, */
 exports.handler = async function (context, event, callback) {
