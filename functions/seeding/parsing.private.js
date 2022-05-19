@@ -1,4 +1,5 @@
 const col = require("lodash/collection");
+const moment = require("moment");
 const csv = require("csv-parser");
 const fs = require("fs");
 const seedingHelperPath = Runtime.getFunctions()["seeding/helpers"].path;
@@ -93,7 +94,6 @@ exports.parseTemplates = function (csvData, customerDetails) {
   const grouped = col.groupBy(csvData, ({ Topic }) => Topic);
   return Object.keys(grouped).map((display_name) => {
     const templates = grouped[display_name].reduce((acc, val) => {
-      console.log(customerDetails);
       const name = [
         customerDetails.FirstName || "FirstName",
         customerDetails.LastName || "LastName",
@@ -118,12 +118,8 @@ exports.parseChatHistory = function (csvData, contactsMap) {
   const result = [];
   const groups = col.groupBy(csvData, (record) => record.conversation_sid);
 
-  console.log(groups);
-
   Object.values(groups).forEach((group) => {
     const orderedGroup = col.orderBy(group, ["message_index"], ["asc"]);
-
-    console.log(orderedGroup);
 
     const participant = orderedGroup.find(
       (item) => item.author.trim() !== "Sales Rep"
@@ -139,10 +135,20 @@ exports.parseChatHistory = function (csvData, contactsMap) {
             prev,
             `[${curr.author} @ ${curr.date_created}]\n${curr.body}`,
             index != group.length - 1 ? "\n\n" : "",
-          ]
-            .join(""), //replace start/end quotations.
+          ].join(""), //replace start/end quotations.
         ""
       );
+
+      //If difference between start/end dates is more than 2 weeks, set start date to 14 days ago.
+      const endDateTime = moment(
+        orderedGroup[orderedGroup.length - 1].date_created
+      );
+      const startDateTime = moment(orderedGroup[0].date_created);
+      const dateDiff = endDateTime.diff(startDateTime, "days");
+      const fourteenDaysPrior = endDateTime
+        .subtract(14, "days")
+        .format("YYYY-MM-DD");
+
       result.push({
         attributes: {
           type: "Event",
@@ -151,7 +157,8 @@ exports.parseChatHistory = function (csvData, contactsMap) {
         EndDateTime: orderedGroup[orderedGroup.length - 1].date_created,
         IsAllDayEvent: false,
         WhoId: id,
-        StartDateTime: orderedGroup[0].date_created,
+        StartDateTime:
+          dateDiff > 14 ? fourteenDaysPrior : orderedGroup[0].date_created,
         Subject: "SMS",
         Type: "Other",
       });

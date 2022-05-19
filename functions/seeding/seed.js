@@ -124,11 +124,19 @@ exports.handler = async function (context, event, callback) {
       endpoint,
       connection,
       chatHistory,
-      false //allOrNone set to false 
+      true
     );
 
+    if (chatUploadResult.error) {
+      response.setStatusCode(400);
+      response.setBody({
+        error: true,
+        result: "An error occurred seeding chat data.",
+      });
+    }
+
     response.setStatusCode(200);
-    response.setBody({ error: false, result: chatUploadResult });
+    response.setBody({ error: false, result: "Succesfully seeded data." });
   } catch (err) {
     console.log(err);
     response.setStatusCode(500);
