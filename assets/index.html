@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-  <title>Twilio Outreach Solution Blueprint</title>
+  <title>Twilio Frontline-Pharma Solution Blueprint</title>
   <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
   <link rel="stylesheet" href="https://unpkg.com/normalize.css/normalize.css">
   <link rel="stylesheet" href="https://unpkg.com/milligram/dist/milligram.min.css">
@@ -15,23 +15,17 @@
 
 <body>
   <header>
-    <h1>Twilio Patient Outreach Application</h1>
+    <h1>Twilio Frontline-Pharma Application</h1>
     <div id="hipaa-disclaimer" style="margin-bottom: 20px;">
       Note that this application is designed for prototyping purposes only and you should<br/>
       <a href="https://ahoy.twilio.com/outreach-sms" target="_blank">consult with a Twilio Expert</a>
       before publicly offering this service in a production context.
     </div>
     <p>
-      The Patient Outreach app packages together the core components of a deployable prototype for SMS-based outreach.
+      The Frontline-Pharma app packages together the core components of a deployable prototype for Frontline for Pharmaceutical company SalesReps.
       This app aims to support Healthcare and Life Sciences organizations that are interested in building
       their own outreach solution to understand what is possible using Twilio,
       and to accelerate the path to success by providing core building blocks and workflows for a working prototype.
-    </p>
-    <p id="simulation-text">
-      This page will walk you through the remainder of the app installation.
-      Once installation is complete, you can use the file upload and download options
-      to test that everything is working appropriately and to see the app in action.
-      You must be logged into the application in order to complete these steps.
     </p>
   </header>
 
@@ -68,58 +62,12 @@
   </div>
   <main style="display: none">
     <section>
-      <div class="flow-loader"></div>
-      <h4>Selected Studio Flow:
-      <select id="flow-selector" onchange="selectFlow(null);"></select>
-      </h4>
-      <a id="flow-open" class="button button-outline" href="" target="_blank">Open Studio Flow</a>
+      <h4>Header4</h4>
+      Put any administrative controls here
       <br/>
       <br/>
     </section>
 
-    <section id="upload">
-      <h4>Upload</h4>
-      <div>
-        <input type="file" id="patient-file" accept="text/csv" style="display:none">
-        <button class="button" id="select-file">Select csv file to upload</button>
-        <h5><b>selected file:</b>
-        <span id="file-name"></span> <span id="file-size"></span>
-        </h5>
-        <button class="button" id="process-file" disabled>Process File</button>
-        <br/>
-        <h5><span id="progress-upload" style="display: none;"></span></h5>
-      </div>
-      <script>
-        const selectedFile = document.getElementById('patient-file').files[0];
-        console.log('selectedFile=', selectedFile);
-      </script>
-    </section>
-
-    <section id="download">
-      <br/>
-      <h4>Download</h4>
-
-      <button class="button" id="download-responses" onclick="downloadResponses(event);">Download Responses</button>
-      <br/>
-      <progress id="progress-download" style="display: none;"></progress>
-    </section>
-
-    <section id="add">
-      <br/>
-      <h4>Add New Studio Flow</h4>
-      <input type="file" id="flow-file" accept=".json" onchange="updateFlowFileInfo(this);" style="display:none">
-      <button class="button" id="select-flow-file" onclick="$('#flow-file').click();">select flow json file to add</button>
-      <h5><b>selected flow file:</b>
-        <span id="flow-file-name"></span> <span id="flow-file-size"></span>
-      </h5>
-      <button class="button" id="process-flow-file" onclick="processFlowFile(event);" disabled>Add Flow</button>
-      <br/>
-      <h5><span id="progress-flow-upload" style="display: none;"></span></h5>
-    </section>
-
-    <script>
-      // initialize();
-    </script>
   </main>
 
   <footer>
@@ -129,5 +77,9 @@
     </p>
   </footer>
 </body>
+
+<script>
+  initialize();
+</script>
 
 </html>
