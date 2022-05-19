@@ -160,6 +160,13 @@ sfdx auth:jwt:grant --clientid <your_consumer_key> \
 - Configure Inbound Routing
   - On your Frontline console, navigate to Frontline -> Manage -> Routing
   - Click on "Custom routing callback URL" and fill in the URL with the first URL above which ends in "/inbound-routing"
+- Configure Voice Integration with Frontline
+  - In the left Twilio Console Panel, navigate to Frontline -> Manage -> Voice Calling
+  - Under "Manage inbound and outbound voice calls", click the "Enabled" Radio button and hit Save
+  - Next go the to console and in the left panel, navigate to Phone Numbers -> Manage -> Active Numbers and click on the phone number associated with your Frontline App
+  - Scroll down to the "Voice" or "Voice & Fax" section
+    - In the "Configure With" dropdown, select "TwiML App"
+    - In the "TwiML App dropdown select "Voice in Frontline" and hit save
 - Finish Configuring/Connecting your CRM
   - Go to Frontline Overview
   - Step 4 should be the last step to complete now click it
