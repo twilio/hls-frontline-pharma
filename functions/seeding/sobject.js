@@ -49,6 +49,30 @@ exports.handler = async function (context, event, callback) {
   return callback(null, response);
 };
 
+exports.bulkUploadSObjects = async function (
+  context,
+  connection,
+  records,
+  allOrNone = true
+) {
+
+  const body = {
+    allOrNone,
+    records: records,
+  };
+  try {
+    const res = await connection.requestPost(
+      `${endpoint}/services/data/${version}/composite/sobjects`,
+      body
+    );
+    return { error: false, result: res };
+  } catch (err) {
+    console.log(err);
+    return { error: true, errorObject: err };
+  }
+};
+
+
 async function createCustomFields(
   connection,
   version = "v53.0",

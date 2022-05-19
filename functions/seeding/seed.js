@@ -4,16 +4,15 @@ const templatesDataPath = Runtime.getAssets()["/templates_data.csv"].path;
 const sfdcAuthenticatePath =
   Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
 const parseSObjectsPath = Runtime.getFunctions()["seeding/parsing"].path;
-const readCsvPath = Runtime.getFunctions()["seeding/read-csv"].path;
-const uploadPath = Runtime.getFunctions()["seeding/upload"].path;
+const sobjectPath = Runtime.getFunctions()["seeding/sobject"].path;
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
 const {
+  readCsv,
   parseAccountsForCompositeApi,
   parseContactsForCompositeApi,
   parseTemplates,
 } = require(parseSObjectsPath);
-const { readCsv } = require(readCsvPath);
-const { bulkUploadSObjects } = require(uploadPath);
+const { bulkUploadSObjects } = require(sobjectPath);
 
 exports.handler = async function (context, event, callback) {
   const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
