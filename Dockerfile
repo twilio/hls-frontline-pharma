@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------------
 # Dockerfile for local installer
 # --------------------------------------------------------------------------------
-FROM twilio/twilio-cli:3.2.1
+FROM twilio/twilio-cli:3.4.0
 
 RUN twilio plugins:install @twilio-labs/plugin-serverless
 
@@ -9,9 +9,12 @@ RUN twilio plugins:install @twilio-labs/plugin-serverless
 WORKDIR /hls-deploy
 
 # copy github files needed for running locally
-COPY . /hls-deploy/
+COPY Dockerfile package.json .env .twilioserverlessrc /hls-installer/
+COPY assets /hls-installer/assets
+COPY functions /hls-installer/functions
 
-# TODO: CD into installer folder, npm install and run, expose port 3000
+# install node dependencies in package.json
+RUN npm install
 
 # expose default port for running locally
 EXPOSE 3000

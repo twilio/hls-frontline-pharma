@@ -42,16 +42,12 @@ exports.handler = async function(context, event, callback) {
         const client = context.getTwilioClient();
         await client.serverless.services(service_sid).update({uiEditable: true});
 
-        const templates = await deploy_studio_flow_templates(context);
-        console.log(THIS, `deployed ${templates.length} studio flow template(s)`);
-
         console.log(THIS, `Completed deployment of ${application_name}`);
 
         const response = {
           status: event.action,
           deployables: [
             { service_sid: service_sid, },
-            { studio_flow_temapltes: templates, },
           ],
         };
         console.log(THIS, response);

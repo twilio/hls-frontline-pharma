@@ -43,12 +43,14 @@ exports.handler = async function (context, event, callback) {
     }
 
     // ---------- available twilio phone numbers
-    // any additional filtering of phone should be here
     {
       const phoneList = await client.api.accounts(context.ACCOUNT_SID).incomingPhoneNumbers.list();
 
       console.log(THIS, `retrieved ${phoneList.length} twilio phone numbers`);
-      response.twilioPhoneNumbers = phoneList.map(p => {
+      // any additional filtering of phone should be below
+      response.twilioPhoneNumbers = phoneList
+        .filter(p => p.capabilities.sms && p.capabilities.voice)
+        .map(p => {
         return {
           phoneNumber: p.phoneNumber,
           friendlyName: p.friendlyName,
