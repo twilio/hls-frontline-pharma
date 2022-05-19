@@ -1,7 +1,7 @@
 const col = require("lodash/collection");
 const csv = require("csv-parser");
 const fs = require("fs");
-const seedingHelperPath = Runtime.getFunctions()["seeding/helper"].path;
+const seedingHelperPath = Runtime.getFunctions()["seeding/helpers"].path;
 const { parsePhoneNumber } = require(seedingHelperPath);
 
 /** Builds an arry that should be assigned to the records field in the SalesForce SObject Collections Create endpoint. */
@@ -90,7 +90,6 @@ exports.parseContactsForCompositeApi = function (csvData, accountMap) {
 
 /** Groups messages by Topic, then replaces "title" and "name" with relevant customer details.*/
 exports.parseTemplates = function (csvData, customerDetails) {
-  console.log(customerDetails);
   const grouped = col.groupBy(csvData, ({ Topic }) => Topic);
   return Object.keys(grouped).map((display_name) => {
     const templates = grouped[display_name].reduce((acc, val) => {
