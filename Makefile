@@ -131,3 +131,17 @@ run-serverless:
 
 tail-log: get-service-sid get-environment-sid
 	twilio serverless:logs --service-sid=$(SERVICE_SID) --environment=$(ENVIRONMENT_SID) --tail
+
+
+create-rsa-private-key-n-ssl-cert:
+	rm -f server.private.key
+	rm -f server.crt
+	openssl genrsa -des3 -passout pass:password -out server.pass.key 2048
+	openssl rsa -passin pass:password -in server.pass.key -out server.private.key
+	rm server.pass.key
+	openssl req -new -key server.private.key -out server.csr -subj "/C=US/ST=California/L=San Francisco/O=Twilio/OU=HLS/CN=twilio.com"
+	openssl x509 -req -sha256 -days 365 -in server.csr -signkey server.private.key -out server.crt
+	rm server.csr
+	@echo "new RSA private key is available at ./server.private.key. Move this into /assets folder to overwrite previous key"
+	@echo "new SSL self-signed certificate is available at ./server.crt. Move this into /assets folder to overwrite certificate"
+
