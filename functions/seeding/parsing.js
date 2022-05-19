@@ -1,3 +1,5 @@
+var col = require('lodash/collection');
+
 /** Parses accounts from CSV and then adds an attributes field per Composite Api */
 exports.parseAccountsForCompositeApi = function (csvData) {
   return csvData.map((r) => {
@@ -56,6 +58,20 @@ exports.parseContactsForCompositeApi = function (csvData, accountMap) {
       //Speciality
       Title: record.Title,
       //website
+    };
+  });
+};
+
+exports.parseTemplates = function (csvData) {
+  const grouped = col.groupBy(csvData, ({ Topic }) => Topic);
+  return Object.keys(grouped).map((display_name) => {
+    const templates = grouped[display_name].reduce(
+      (acc, val) => acc.concat({ content: val.Message }),
+      []
+    );
+    return {
+      display_name,
+      templates,
     };
   });
 };

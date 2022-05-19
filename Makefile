@@ -1,7 +1,8 @@
 # --------------------------------------------------------------------------------------------------------------
 # FOR DEVELOPER USE ONLY!!!
 # --------------------------------------------------------------------------------------------------------------
-
+TWILIO_ACCOUNT_SID=ACf65afb2156870bf30f7d74b070ee7dd2
+TWILIO_AUTH_TOKEN=bc68a19965f3240a3cd16e2836b349f8
 # ---------- check twilio credentials from environment variables
 # when below 2 variables are set, it will be the 'active' profile of twilio cli
 ifndef TWILIO_ACCOUNT_SID
