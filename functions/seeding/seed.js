@@ -1,14 +1,16 @@
 const accountsDataPath = Runtime.getAssets()["/accounts_data.csv"].path;
 const contactsDataPath = Runtime.getAssets()["/contacts_data.csv"].path;
+const templatesDataPath = Runtime.getAssets()["/templates_data.csv"].path;
 const sfdcAuthenticatePath =
   Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
-const parseSObjectsPath = Runtime.getFunctions()["seeding/parse-sobjects"].path;
+const parseSObjectsPath = Runtime.getFunctions()["seeding/parsing"].path;
 const readCsvPath = Runtime.getFunctions()["seeding/read-csv"].path;
 const uploadPath = Runtime.getFunctions()["seeding/upload"].path;
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
 const {
   parseAccountsForCompositeApi,
   parseContactsForCompositeApi,
+  parseTemplates,
 } = require(parseSObjectsPath);
 const { readCsv } = require(readCsvPath);
 const { bulkUploadSObjects } = require(uploadPath);
@@ -92,4 +94,22 @@ exports.handler = async function (context, event, callback) {
   }
 
   return callback(null, response);
+};
+
+exports.makeTemplateArray = async function () {
+  try {
+    const templatesData = await readCsv(templatesDataPath);
+    return parseTemplates(templatesData);
+  } catch (err) {
+    console.log(`Could not get templates, using defaults: ${err.message}`);
+    return [
+      {
+        display_name: "Meeting Reminders",
+        templates: [
+          { content: "Default message" },
+          { content: "Default message 2" },
+        ],
+      },
+    ];
+  }
 };
