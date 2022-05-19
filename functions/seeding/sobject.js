@@ -98,7 +98,6 @@ exports.bulkUploadSObjects = async function (
   records,
   allOrNone = true
 ) {
-
   const body = {
     allOrNone,
     records: records,
@@ -114,7 +113,6 @@ exports.bulkUploadSObjects = async function (
     return { error: true, errorObject: err };
   }
 };
-
 
 async function createCustomFields(
   connection,
@@ -219,6 +217,8 @@ async function setPermissionsForFields(
 
 exports.bulkUploadSObjects = async function (
   context,
+  version = "v53.0",
+  endpoint,
   connection,
   records,
   allOrNone = true

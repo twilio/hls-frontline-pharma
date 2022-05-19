@@ -1,6 +1,8 @@
 const accountsDataPath = Runtime.getAssets()["/accounts_data.csv"].path;
 const contactsDataPath = Runtime.getAssets()["/contacts_data.csv"].path;
 const templatesDataPath = Runtime.getAssets()["/templates_data.csv"].path;
+const helperPath = Runtime.getFunctions()["helpers"].path;
+const { getParam } = require(helperPath);
 const sfdcAuthenticatePath =
   Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
   const crmPath = Runtime.getFunctions()["crm"].path
@@ -28,6 +30,7 @@ exports.handler = async function (context, event, callback) {
   response.appendHeader("Content-Type", "application/json");
   response.setStatusCode(200);
   try {
+    const endpoint = await getParam(context, "SFDC_INSTANCE_URL")
     //read csv data
     const accountsData = await readCsv(accountsDataPath);
     const contactsData = await readCsv(contactsDataPath);
@@ -36,6 +39,8 @@ exports.handler = async function (context, event, callback) {
     const parsedAccounts = parseAccountsForCompositeApi(accountsData);
     const accountUploadResult = await bulkUploadSObjects(
       context,
+      "v53.0",
+      endpoint,
       connection,
       parsedAccounts,
       true
@@ -70,6 +75,8 @@ exports.handler = async function (context, event, callback) {
 
     const contactUploadResult = await bulkUploadSObjects(
       context,
+      "v53.0",
+      endpoint,
       connection,
       parsedContacts,
       true
