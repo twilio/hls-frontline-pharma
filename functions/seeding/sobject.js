@@ -2,7 +2,8 @@ const sfdcAuthenticatePath =
   Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
 
-/** Creates custom sObjects. */
+/** Creates custom sObject fields. */
+//TODO: This function is not yet "wired" up to using real data
 exports.handler = async function (context, event, callback) {
   const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
   const { connection } = sfdcConnectionIdentity;
@@ -14,36 +15,78 @@ exports.handler = async function (context, event, callback) {
   response.appendHeader("Content-Type", "application/json");
   response.setStatusCode(200);
 
-  //TODO: Wire up all non SF fields from CSV for Accounts and Contacts
-  try {
-
-    const customAccountFields = ["test", "test2"]
-
-    const createFieldsResult = await createCustomFields(
-      connection,
-      version,
-      endpoint,
-      "Account",
-      customAccountFields
-    ); 
-
-    const setPermissionsResult = await setPermissionsForFields(
-      connection,
-      version,
-      endpoint,
-      "System Administrator",
-      "Account",
-      customAccountFields
-    ); 
-
+  /**
+   * event.payload should look like this:
+   *
+   * event.payload = [
+   * {sObjectName: <sObjectName>,
+   * fields: [
+   *  <fieldName1>,
+   *  <fieldName2>,
+   *  ...
+   * ]}
+   * ]
+   */
+  if (!event.payload) {
     response.setBody({
-      error: false,
-      result: `Successfully created custom fields ${customAccountFields}`,
+      error: true,
+      errorObject: new Error("No payload was set!"),
     });
+    response.setStatusCode(400);
+    return callback(null, response);
+  }
+
+  try {
+    await new Promise(async (resolve, reject) => {
+      event.payload.forEach(async (item) => {
+        const createFieldsResult = await createCustomFields(
+          connection,
+          version,
+          endpoint,
+          item.sObjectName,
+          item.fields
+        );
+
+        const setPermissionsResult = await setPermissionsForFields(
+          connection,
+          version,
+          endpoint,
+          "System Administrator",
+          item.sObjectName,
+          item.fields
+        );
+
+        const combinedResponse = createFieldsResult.compositeResponse.concat(
+          setPermissionsResult.compositeResponse
+        );
+
+        console.log(combinedResponse);
+        const failedItems = combinedResponse.filter(
+          ({ httpStatusCode }) => httpStatusCode != 200 && httpStatusCode != 201
+        );
+        if (failedItems.length > 0)
+          reject(`${failedItems.length} items failed to upload`);
+        resolve();
+      });
+    })
+      .then((resp) => {
+        response.setBody({
+          error: false,
+          result: `Successfully created custom fields.`,
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        response.setStatusCode(400);
+        response.setBody({
+          error: true,
+          errorObject: "Bad request.",
+        });
+      });
   } catch (err) {
     console.log(err);
     response.setStatusCode(500);
-    response.setBody("Server error.");
+    response.setBody({ error: true, errorObject: new Error("Server error.") });
   }
 
   return callback(null, response);
@@ -149,3 +192,25 @@ async function setPermissionsForFields(
     );
   });
 }
+
+exports.bulkUploadSObjects = async function (
+  context,
+  connection,
+  records,
+  allOrNone = true
+) {
+  const body = {
+    allOrNone,
+    records: records,
+  };
+  try {
+    const res = await connection.requestPost(
+      `${endpoint}/services/data/${version}/composite/sobjects`,
+      body
+    );
+    return { error: false, result: res };
+  } catch (err) {
+    console.log(err);
+    return { error: true, errorObject: err };
+  }
+};

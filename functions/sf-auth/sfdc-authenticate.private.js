@@ -58,7 +58,7 @@ const signJwtAndRequestNewTokens = async (context, salesforceUsername) => {
   try {
     const response = await axios.post(
       "https://login.salesforce.com/services/oauth2/token",
-      querystring.stringify(params)
+      querystring.stringify(params) //new URLSearchParams(params)
     );
 
     const newTokens = response.data;

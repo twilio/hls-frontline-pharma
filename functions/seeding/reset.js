@@ -1,8 +1,8 @@
 const sfdcAuthenticatePath =
   Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
-const accountsSOQL = "SELECT Id FROM Account LIMIT 200"
-const contactsSOQL = "SELECT Id FROM Contact LIMIT 200"
+const accountsSOQL = "SELECT Id FROM Account LIMIT 200";
+const contactsSOQL = "SELECT Id FROM Contact LIMIT 200";
 
 exports.handler = async function (context, event, callback) {
   const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
@@ -52,7 +52,7 @@ exports.handler = async function (context, event, callback) {
   } catch (err) {
     console.log(err);
     response.setStatusCode(500);
-    response.setBody("Server error.");
+    response.setBody({ error: true, errorObject: "Server Error." });
   }
 
   return callback(null, response);
