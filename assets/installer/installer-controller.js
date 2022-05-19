@@ -24,6 +24,8 @@ const UI = {
   app_open: '#app_open',
   app_info: '#app_info',
   service_open: '#service_open',
+  frontline_open: '#frontline_open',
+  salesforce_open: '#salesforce_open',
 }
 
 
@@ -243,6 +245,8 @@ function checkDeployment() {
           $(UI.app_deployed).hide();
           $(UI.app_open).hide();
           $(UI.service_open).hide();
+          $(UI.frontline_open).hide();
+          $(UI.salesforce_open).hide();
           $(UI.app_deploy).show();
           $(UI.app_deploy).css('pointer-events', '');
           $(UI.app_redeploy).hide();
@@ -252,7 +256,11 @@ function checkDeployment() {
           $(UI.app_open).show();
           $(UI.app_open).attr('href', response.application_url);
           $(UI.service_open).show();
-          $(UI.service_open).attr('href', `https://www.twilio.com/console/functions/api/start/${response.service_sid}`);
+          $(UI.service_open).attr('href', response.service_url);
+          $(UI.frontline_open).show();
+          $(UI.frontline_open).attr('href', response.frontline_url);
+          $(UI.salesforce_open).show();
+          $(UI.salesforce_open).attr('href', response.salesforce_url);
           $(UI.app_deploy).hide();
           $(UI.app_redeploy).show();
           $(UI.app_redeploy).css('pointer-events', '');
@@ -298,8 +306,13 @@ function deploy(e, action) {
 //    $('.service-loader.button-loader').show();
 
   $(UI.app_deploy).css('pointer-events', 'none');
+  $(UI.app_deploy).hide();
   $(UI.app_redeploy).css('pointer-events', 'none');
+  $(UI.app_redeploy).hide();
   $(UI.app_undeploy).css('pointer-events', 'none');
+  $(UI.app_undeploy).hide();
+
+  $(UI.app_deployed).hide();
   $(UI.app_deploying).show();
 
   fetch('/installer/deploy', {

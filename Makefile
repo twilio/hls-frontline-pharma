@@ -96,16 +96,8 @@ get-environment-sid: get-service-sid
 make-service-editable: get-service-sid
 	twilio api:serverless:v1:services:update --sid=$(SERVICE_SID) --ui-editable -o=json
 
-run-serverless:
-	npm install
-	@if [[ ! -f .env.localhost ]]; then \
-      echo ".env.localhost needs to be copied from .env and value set!!! aborting..."; \
-    fi
-	@[[ -f .env.localhost ]]
-	twilio serverless:start --env=.env.localhost
 
-
-deploy-service: 
+deploy-service:
 	rm -f .twiliodeployinfo
 	twilio serverless:deploy --runtime node14 --override-existing-project
 
@@ -118,6 +110,7 @@ confirm-delete:
 undeploy-service: confirm-delete get-service-sid get-verify-sid
 	twilio api:serverless:v1:services:remove --sid $(SERVICE_SID)
 	rm -f .twiliodeployinfo
+
 
 deploy-all:  deploy-service make-service-editable
 	@echo deployed and configured!

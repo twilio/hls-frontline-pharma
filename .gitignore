@@ -126,7 +126,9 @@ dist
 .pnp.*
 
 # encryption
-server.private.key
+# server.private.key
 
 .vscode
 .env.local
+.env.localhost
+.idea/

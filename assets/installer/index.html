@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HLS Outreach Installer</title>
+  <title>HLS Installer</title>
   <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
   <link rel="stylesheet" href="https://unpkg.com/normalize.css/normalize.css">
   <link rel="stylesheet" href="https://unpkg.com/milligram/dist/milligram.min.css">
   <link rel="stylesheet" href="installer.css">
 </head>
 <body>
-<h1>Installer for <a id="application-name">HLS Outreach SMS</a></h1>
+<h1>Installer for <a id="application-name">hls-frontline-pharma</a></h1>
 <div id="configure-form">
   <form>
 
@@ -79,17 +79,21 @@
       <div class="deployable-loader"></div>
       <div class="form-group">
         <div id="app_deployer" style="display: none;" class="deployer">
+          <a class="button" id="app_deploy"   onclick="deploy(event, 'DEPLOY');">deploy</a>
+          <a class="button" id="app_redeploy" onclick="deploy(event, 'REDEPLOY');">redeploy</a>
+          <a class="button" id="app_undeploy" onclick="deploy(event, 'UNDEPLOY');">undeploy</a>
           <div id="app_deployed" style="display: none;" class="deployer">
             <h4><span class="checkmark">&#10003;</span> Application is deployed</h4>
             <span>
               <a id="app_open" class="button button-outline" href="" target="_blank">Open Application</a>
               <a id="service_open" class="button button-outline" href="" target="_blank">Open Service</a>
             </span>
+            <span>
+              <a id="frontline_open" class="button button-outline" href="" target="_blank">Open Frontline</a>
+              <a id="salesforce_open" class="button button-outline" href="" target="_blank">Open Salesforce</a>
+            </span>
             <pre id="app_info" style="font-size: small"></pre>
           </div>
-          <a class="button" id="app_deploy"   onclick="deploy(event, 'DEPLOY');">deploy</a>
-          <a class="button" id="app_redeploy" onclick="deploy(event, 'REDEPLOY');">redeploy</a>
-          <a class="button" id="app_undeploy" onclick="deploy(event, 'UNDEPLOY');">undeploy</a>
           <div id="app_deploying" style="display: none;" class="deployer">
             <h4>Application is being deployed.</h4>
             <p>
