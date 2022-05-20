@@ -82,9 +82,10 @@ exports.parseContactsForCompositeApi = function (csvData, accountMap) {
       Languages__c: record.Languages,
       LastName: record.LastName,
       Salutation: record.Salutation,
-      //Speciality
+      Speciality: record.Speciality,
       Title: record.Title,
-      //website
+      Website: record.WebsiteLink, //needs to be added to custom fields
+      Whatsapp: record.whatsapp //needs to be added to custom fields
     };
   });
 };

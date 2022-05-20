@@ -6,7 +6,6 @@ const helperPath = Runtime.getFunctions()["helpers"].path;
 const { getParam } = require(helperPath);
 const sfdcAuthenticatePath =
   Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
-const crmPath = Runtime.getFunctions()["crm"].path;
 const parseSObjectsPath = Runtime.getFunctions()["seeding/parsing"].path;
 const sobjectPath = Runtime.getFunctions()["seeding/sobject"].path;
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
@@ -17,7 +16,10 @@ const {
   parseTemplates,
   parseChatHistory,
 } = require(parseSObjectsPath);
-const { bulkUploadSObjects } = require(sobjectPath);
+const {
+  bulkUploadSObjects,
+  addCustomFieldsAndPermissions,
+} = require(sobjectPath);
 
 /** Reads Account, Contact, and Conversation data out of CSVs and parses them into SObject format, */
 exports.handler = async function (context, event, callback) {
@@ -33,6 +35,30 @@ exports.handler = async function (context, event, callback) {
   response.setStatusCode(200);
   try {
     const endpoint = await getParam(context, "SFDC_INSTANCE_URL");
+
+    //create custom fields and permissions
+    const customFields = [
+      {
+        sObjectName: "Contact",
+        fields: ["Website", "Whatsapp"],
+      },
+    ];
+
+    const res = await addCustomFieldsAndPermissions(
+      context,
+      connection,
+      customFields
+    );
+
+    if (res.error) {
+      response.setBody({
+        error: true,
+        errorObject: "Could not set custom fields.",
+      });
+      response.setStatusCode(400);
+      return callback(null, response);
+    }
+
     //read csv data
     const accountsData = await readCsv(accountsDataPath);
     const contactsData = await readCsv(contactsDataPath);
@@ -94,14 +120,12 @@ exports.handler = async function (context, event, callback) {
         contactUploadResult.result.find((record) => !record.success))
     ) {
       response.setStatusCode(400);
-      response.setBody(
-        response.setBody({
-          error: true,
-          errorObject: new Error(
-            "There was an error uploading at least one contact to SalesForce."
-          ),
-        })
-      );
+      response.setBody({
+        error: true,
+        errorObject: new Error(
+          "There was an error uploading at least one contact to SalesForce."
+        ),
+      })
       return callback(null, response);
     }
 

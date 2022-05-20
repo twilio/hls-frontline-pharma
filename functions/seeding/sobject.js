@@ -1,15 +1,14 @@
-const sfdcAuthenticatePath =
-  Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
-const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
+const helpersPath = Runtime.getFunctions()["helpers"].path;
+const { getParam } = require(helpersPath);
 
 /** Creates custom sObject fields. */
-//TODO: This function is not yet "wired" up to using real data
-exports.handler = async function (context, event, callback) {
-  const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
-  const { connection } = sfdcConnectionIdentity;
-
-  const version = context.SF_VERSION ?? "v53.0";
-  const endpoint = context.SFDC_INSTANCE_URL;
+exports.addCustomFieldsAndPermissions = async function (
+  context,
+  connection,
+  payload
+) {
+  const version = "v53.0";
+  const endpoint = await getParam(context, "SFDC_INSTANCE_URL");
 
   const response = new Twilio.Response();
   response.appendHeader("Content-Type", "application/json");
@@ -27,18 +26,10 @@ exports.handler = async function (context, event, callback) {
    * ]}
    * ]
    */
-  if (!event.payload) {
-    response.setBody({
-      error: true,
-      errorObject: new Error("No payload was set!"),
-    });
-    response.setStatusCode(400);
-    return callback(null, response);
-  }
 
   try {
-    await new Promise(async (resolve, reject) => {
-      event.payload.forEach(async (item) => {
+    const res = await new Promise(async (resolve, reject) => {
+      payload.forEach(async (item) => {
         const createFieldsResult = await createCustomFields(
           connection,
           version,
@@ -70,26 +61,23 @@ exports.handler = async function (context, event, callback) {
       });
     })
       .then((resp) => {
-        response.setBody({
+        return {
           error: false,
           result: `Successfully created custom fields.`,
-        });
+        };
       })
       .catch((err) => {
         console.log(err);
-        response.setStatusCode(400);
-        response.setBody({
+        return {
           error: true,
           errorObject: "Bad request.",
-        });
+        };
       });
+    return res;
   } catch (err) {
     console.log(err);
-    response.setStatusCode(500);
-    response.setBody({ error: true, errorObject: new Error("Server error.") });
+    return { error: true, errorObject: new Error("Server error.") };
   }
-
-  return callback(null, response);
 };
 
 exports.bulkUploadSObjects = async function (
@@ -237,4 +225,18 @@ exports.bulkUploadSObjects = async function (
     console.log(err);
     return { error: true, errorObject: err };
   }
+};
+
+exports.deleteCustomFields = async function (custom, payload){
+  
+}
+
+/** Gets the list of fields on a given sObject */
+exports.fields = async function (connection, sObjectName) {
+  return new Promise((resolve, reject) => {
+    connection.sobject(sObjectName).describe((err, result) => {
+      if (err) reject(err);
+      resolve(result.fields.map((field) => field.name));
+    });
+  });
 };
