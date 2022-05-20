@@ -1,15 +1,14 @@
-const sfdcAuthenticatePath =
-  Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
-const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
+const helpersPath = Runtime.getFunctions()["helpers"].path;
+const { getParam } = require(helpersPath);
 
 /** Creates custom sObject fields. */
-//TODO: This function is not yet "wired" up to using real data
-exports.handler = async function (context, event, callback) {
-  const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
-  const { connection } = sfdcConnectionIdentity;
-
-  const version = context.SF_VERSION ?? "v53.0";
-  const endpoint = context.SFDC_INSTANCE_URL;
+exports.addCustomFieldsAndPermissions = async function (
+  context,
+  connection,
+  payload
+) {
+  const version = "v53.0";
+  const endpoint = await getParam(context, "SFDC_INSTANCE_URL");
 
   const response = new Twilio.Response();
   response.appendHeader("Content-Type", "application/json");
@@ -27,18 +26,10 @@ exports.handler = async function (context, event, callback) {
    * ]}
    * ]
    */
-  if (!event.payload) {
-    response.setBody({
-      error: true,
-      errorObject: new Error("No payload was set!"),
-    });
-    response.setStatusCode(400);
-    return callback(null, response);
-  }
 
   try {
-    await new Promise(async (resolve, reject) => {
-      event.payload.forEach(async (item) => {
+    const res = await new Promise(async (resolve, reject) => {
+      payload.forEach(async (item) => {
         const createFieldsResult = await createCustomFields(
           connection,
           version,
@@ -60,7 +51,6 @@ exports.handler = async function (context, event, callback) {
           setPermissionsResult.compositeResponse
         );
 
-        console.log(combinedResponse);
         const failedItems = combinedResponse.filter(
           ({ httpStatusCode }) => httpStatusCode != 200 && httpStatusCode != 201
         );
@@ -70,26 +60,23 @@ exports.handler = async function (context, event, callback) {
       });
     })
       .then((resp) => {
-        response.setBody({
+        return {
           error: false,
           result: `Successfully created custom fields.`,
-        });
+        };
       })
       .catch((err) => {
         console.log(err);
-        response.setStatusCode(400);
-        response.setBody({
+        return {
           error: true,
           errorObject: "Bad request.",
-        });
+        };
       });
+    return res;
   } catch (err) {
     console.log(err);
-    response.setStatusCode(500);
-    response.setBody({ error: true, errorObject: new Error("Server error.") });
+    return { error: true, errorObject: new Error("Server error.") };
   }
-
-  return callback(null, response);
 };
 
 exports.bulkUploadSObjects = async function (
@@ -133,7 +120,7 @@ async function createCustomFields(
           required: false,
           externalId: false,
           type: "Text",
-          length: 32,
+          length: 128,
         },
       },
       referenceId: `${sObjectName}_${name}`,
@@ -237,4 +224,39 @@ exports.bulkUploadSObjects = async function (
     console.log(err);
     return { error: true, errorObject: err };
   }
+};
+
+/** Deletes a set of custom fields on a set of sObjects */
+exports.deleteCustomFields = async function (connection, customFields) {
+  const promises = customFields.map(async (set) => {
+    return new Promise((resolve, reject) => {
+      try {
+        const fullNames = set.fields.map(
+          (name) => `${set.sObjectName}.${name}__c`
+        );
+        connection.metadata.delete("CustomField", fullNames, (err, output) => {
+          if (err) {
+            console.log(err);
+            reject({ error: true, errorObject: err });
+          }
+          const failure =
+            output.filter((item) => item.success === false).length > 0;
+          if (failure) {
+            reject({
+              error: true,
+              errorObject: "Some custom fields did not delete.",
+            });
+          }
+
+          resolve({ error: false });
+        });
+      } catch (err) {
+        reject({ error: true, errorObject: err });
+      }
+    });
+  });
+
+  const results = await Promise.all(promises);
+
+  return results;
 };

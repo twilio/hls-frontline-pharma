@@ -76,15 +76,16 @@ exports.parseContactsForCompositeApi = function (csvData, accountMap) {
       MailingStreet: record.MailingStreet,
       MailingCity: record.MailingCity,
       MailingCountry: record.MailingCountry,
-      //MailingPostalCode: record.MailingPostalCode,
+      MailingPostalCode: record.MailingPostalCode,
       MailingState: record.MailingState,
       FirstName: record.FirstName,
       Languages__c: record.Languages,
       LastName: record.LastName,
       Salutation: record.Salutation,
-      //Speciality
+      Speciality__c: record.Speciality,
       Title: record.Title,
-      //website
+      Website__c: record.WebsiteLink, //needs to be added to custom fields
+      Whatsapp__c: record.whatsapp //needs to be added to custom fields
     };
   });
 };

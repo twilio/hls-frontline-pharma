@@ -132,3 +132,4 @@ dist
 .env.local
 .env.localhost
 .idea/
+.DS_Store
