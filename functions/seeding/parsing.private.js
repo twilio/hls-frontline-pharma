@@ -1,4 +1,5 @@
 const col = require("lodash/collection");
+const moment = require("moment");
 const csv = require("csv-parser");
 const fs = require("fs");
 const seedingHelperPath = Runtime.getFunctions()["seeding/helpers"].path;
@@ -93,7 +94,6 @@ exports.parseTemplates = function (csvData, customerDetails) {
   const grouped = col.groupBy(csvData, ({ Topic }) => Topic);
   return Object.keys(grouped).map((display_name) => {
     const templates = grouped[display_name].reduce((acc, val) => {
-      console.log(customerDetails);
       const name = [
         customerDetails.FirstName || "FirstName",
         customerDetails.LastName || "LastName",
@@ -110,4 +110,60 @@ exports.parseTemplates = function (csvData, customerDetails) {
       templates,
     };
   });
+};
+
+exports.parseChatHistory = function (csvData, contactsMap) {
+  //csvData: conversation_sid,	message_index,	author,	body,	date_created
+
+  const result = [];
+  const groups = col.groupBy(csvData, (record) => record.conversation_sid);
+
+  Object.values(groups).forEach((group) => {
+    const orderedGroup = col.orderBy(group, ["message_index"], ["asc"]);
+
+    const participant = orderedGroup.find(
+      (item) => item.author.trim() !== "Sales Rep"
+    );
+    const id = contactsMap.find((contact) =>
+      participant.author.includes(contact.name)
+    ).sfId;
+
+    if (id) {
+      const description = orderedGroup.reduce(
+        (prev, curr, index) =>
+          [
+            prev,
+            `[${curr.author} @ ${curr.date_created}]\n${curr.body}`,
+            index != group.length - 1 ? "\n\n" : "",
+          ].join(""), //replace start/end quotations.
+        ""
+      );
+
+      //If difference between start/end dates is more than 2 weeks, set start date to 14 days ago.
+      const endDateTime = moment(
+        orderedGroup[orderedGroup.length - 1].date_created
+      );
+      const startDateTime = moment(orderedGroup[0].date_created);
+      const dateDiff = endDateTime.diff(startDateTime, "days");
+      const fourteenDaysPrior = endDateTime
+        .subtract(14, "days")
+        .format("YYYY-MM-DD");
+
+      result.push({
+        attributes: {
+          type: "Event",
+        },
+        Description: description,
+        EndDateTime: orderedGroup[orderedGroup.length - 1].date_created,
+        IsAllDayEvent: false,
+        WhoId: id,
+        StartDateTime:
+          dateDiff > 14 ? fourteenDaysPrior : orderedGroup[0].date_created,
+        Subject: "SMS",
+        Type: "Other",
+      });
+    }
+  }, "");
+
+  return result;
 };
