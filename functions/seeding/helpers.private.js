@@ -10,4 +10,13 @@ function parsePhoneNumber(number) {
   return "";
 }
 
-module.exports = {parsePhoneNumber}
+async function runSOQL(connection, SOQL) {
+  return new Promise((resolve, reject) => {
+    connection.query(SOQL, function (err, result) {
+      if (err) reject(err);
+      resolve(result); //Check result.totalSize and result.records.length
+    });
+  });
+}
+
+module.exports = { parsePhoneNumber, runSOQL };
