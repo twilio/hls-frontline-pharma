@@ -4,7 +4,9 @@ const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
 const staticPath = Runtime.getFunctions()["seeding/static"].path;
 const { customFields } = require(staticPath);
 const sObjectspath = Runtime.getFunctions()["seeding/sobject"].path;
-const { deleteCustomFields } = require(sObjectspath);
+const { deleteCustomFields, deleteRecords } = require(sObjectspath);
+const seedingHelperPath = Runtime.getFunctions()["seeding/helpers"].path;
+const { runSOQL } = require(seedingHelperPath);
 const accountsSOQL = "SELECT Id FROM Account LIMIT 200";
 const contactsSOQL = "SELECT Id FROM Contact LIMIT 200";
 const casesSOQL = "SELECT Id FROM Case LIMIT 200";
@@ -33,23 +35,11 @@ exports.handler = async function (context, event, callback) {
     const opportunitiesIds = opportunities.records.map((record) => record.Id);
     const entitlementsIds = entitlements.records.map((record) => record.Id);
 
-    const entitlementsDeletionResult = await deleteRecords(
-      connection,
-      "Entitlement",
-      entitlementsIds
-    );
-
-    const casesDeletionResult = await deleteRecords(
-      connection,
-      "Case",
-      caseIds
-    );
-
-    const opportunitiesDeletionResult = await deleteRecords(
-      connection,
-      "Opportunity",
-      opportunitiesIds
-    );
+    await Promise.all([
+      deleteRecords(connection, "Entitlement", entitlementsIds),
+      deleteRecords(connection, "Case", caseIds),
+      deleteRecords(connection, "Opportunity", opportunitiesIds),
+    ]);
 
     const accountsDeletionResult = await deleteRecords(
       connection,
@@ -74,16 +64,10 @@ exports.handler = async function (context, event, callback) {
       (record) => record.success
     );
 
-    const customFieldDeletionResult = await deleteCustomFields(
-      connection,
-      customFields
-    );
-
-    const deletionMessage = `Deleted ${numAccountsDeleted.length} accounts and ${numContactsDeleted.length} contacts not associated with any accounts.`;
+    await deleteCustomFields(connection, customFields);
 
     response.setBody({
       error: false,
-      result: deletionMessage,
     });
   } catch (err) {
     console.log(err);
@@ -93,21 +77,3 @@ exports.handler = async function (context, event, callback) {
 
   return callback(null, response);
 };
-
-async function runSOQL(connection, SOQL) {
-  return new Promise((resolve, reject) => {
-    connection.query(SOQL, function (err, result) {
-      if (err) reject(err);
-      resolve(result); //Check result.totalSize and result.records.length
-    });
-  });
-}
-
-async function deleteRecords(connection, objectName, ids) {
-  return new Promise((resolve, reject) => {
-    connection.delete(objectName, ids, {}, function (err, result) {
-      if (err) reject(err);
-      resolve(result);
-    });
-  });
-}

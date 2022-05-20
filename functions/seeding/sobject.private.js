@@ -239,14 +239,6 @@ exports.deleteCustomFields = async function (connection, customFields) {
             console.log(err);
             reject({ error: true, errorObject: err });
           }
-          const failure =
-            output.filter((item) => item.success === false).length > 0;
-          if (failure) {
-            reject({
-              error: true,
-              errorObject: "Some custom fields did not delete.",
-            });
-          }
 
           resolve({ error: false });
         });
@@ -259,4 +251,13 @@ exports.deleteCustomFields = async function (connection, customFields) {
   const results = await Promise.all(promises);
 
   return results;
+};
+
+exports.deleteRecords = async function (connection, objectName, ids) {
+  return new Promise((resolve, reject) => {
+    connection.delete(objectName, ids, {}, function (err, result) {
+      if (err) reject(err);
+      resolve(result);
+    });
+  });
 };
