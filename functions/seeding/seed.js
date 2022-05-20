@@ -145,6 +145,8 @@ exports.handler = async function (context, event, callback) {
       true
     );
 
+    console.log(chatUploadResult)
+
     if (chatUploadResult.error) {
       response.setStatusCode(400);
       response.setBody({

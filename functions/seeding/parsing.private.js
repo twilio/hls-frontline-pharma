@@ -161,7 +161,6 @@ exports.parseChatHistory = function (csvData, contactsMap) {
         StartDateTime:
           dateDiff > 14 ? fourteenDaysPrior : orderedGroup[0].date_created,
         Subject: "SMS",
-        Type: "Other",
       });
     }
   }, "");
