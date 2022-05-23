@@ -228,7 +228,7 @@ such as development servers or another HLS installer still running.
 #### Build Installer Docker Image
 
 ```shell
-docker build --tag hls-outreach-installer --no-cache https://github.com/bochoi-twlo/hls-outreach-sms.git#main
+docker build --tag hls-frontline-installer --no-cache .
 ```
 
 If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.
@@ -238,9 +238,9 @@ If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.
 Replace `${TWILIO_ACCOUNT_SID}` and `${TWILIO_AUTH_TOKEN}` with that of your target Twilio account.
 
 ```shell
-docker run --name hls-outreach-installer --rm --publish 3000:3000  \
+docker run --name hls-frontline-installer --rm --publish 3000:3000  \
 --env ACCOUNT_SID=${TWILIO_ACCOUNT_SID} --env AUTH_TOKEN=${TWILIO_AUTH_TOKEN} \
---interactive --tty hls-website-installer
+--interactive --tty hls-frontline-installer
 ```
 
 If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.
