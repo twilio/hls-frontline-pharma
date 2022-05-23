@@ -88,6 +88,7 @@ Frontline requires that there is a SSO integrated with your App in order to sign
   - On the left bar, select Manage > SSO/Log in
   - Copy your Realm SID (i.e. JBccd16179731fe20736f887e6eXXXXXXX)
 - Create a Connected App in Salesforce for Frontline
+
   - On the left-hand panel, navigate to Platform Tools -> Apps -> App Manager
   - Press "New Connected App"
   - Fill in just the red-highlighted portion:
@@ -151,14 +152,27 @@ Frontline requires that there is a SSO integrated with your App in order to sign
   - First take the `server.key` file in the `/JWT` directory we created in a previous step and move it to the `/assets` folder of this repo and rename `server.key` to `server.private.key` (This is the Salesforce key which will be cached inside Twilio Sync)
   - Fill out all the fields in `.env` file (SYNC_SID optional as it will be created)
   - run `make service-deploy` at the root level of this directory which deploys your serverless functions needed to connect Frontline and Salesforce
-  - Take note of 4 [protected] endpoints after the deployment completes needed for the next 2 steps:
+  - Take note of 5 [protected] endpoints after the deployment completes needed for the next 3 steps:
     - `https://hls-frontline-pharma-XXXX-dev.twil.io/inbound-routing`
+    - `https://hls-frontline-pharma-XXXX-dev.twil.io/conversation`
     - `https://hls-frontline-pharma-XXXX-dev.twil.io/crm`
     - `https://hls-frontline-pharma-XXXX-dev.twil.io/outgoing-conversation`
     - `https://hls-frontline-pharma-XXXX-dev.twil.io/templates`
 - Configure Inbound Routing
   - On your Frontline console, navigate to Frontline -> Manage -> Routing
   - Click on "Custom routing callback URL" and fill in the URL with the first URL above which ends in "/inbound-routing"
+- Configure Conversations Global Webhooks
+  - On the Twilio Console, on the left panel, navigate to Conversations -> Manage -> Global Webhooks
+  - On the page, paste in your `https://hls-frontline-pharma-XXXX-dev.twil.io/conversation` URL to both the "Pre-Event URL" and "Post-Event URL", keep the method to be "HTTP POST"
+  - Under "Webhook Filtering" Section check the following boxes:
+    - `onConversationAdd`
+    - `onMessageAdd`
+    - `onParticipantAdd`
+    - `onConversationAdded`
+    - `onConversationStateUpdated`
+    - `onMessageAdded`
+    - `onParticipantAdded`
+  - Hit Save
 - Configure Voice Integration with Frontline
   - In the left Twilio Console Panel, navigate to Frontline -> Manage -> Voice Calling
   - Under "Manage inbound and outbound voice calls", click the "Enabled" Radio button and hit Save
