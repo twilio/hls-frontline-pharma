@@ -1,6 +1,7 @@
 const col = require("lodash/collection");
 const moment = require("moment");
-const csv = require("csv-parser");
+const momentTimeZone = require('moment-timezone')
+const csvReader = require("csv-parser");
 const fs = require("fs");
 const seedingHelperPath = Runtime.getFunctions()["seeding/helpers"].path;
 const { parsePhoneNumber } = require(seedingHelperPath);
@@ -16,7 +17,7 @@ exports.readCsv = async function (filePath) {
       }
 
       fs.createReadStream(filePath)
-        .pipe(csv())
+        .pipe(csvReader())
         .on("error", (err) => reject(err))
         .on("data", (data) => results.push(data))
         .on("end", () => resolve(results));
@@ -25,6 +26,40 @@ exports.readCsv = async function (filePath) {
     }
   });
   return res;
+};
+
+/**
+ * 
+ * @param {*} fileName The output file name (i.e. 'mydata.csv')
+ * @param {*} data The data object to write to the csv
+ * @param {*} blacklist Optional array of keys to not write out to the csv
+ */
+exports.writeCsv = async function (filePath, data, blacklist) {
+  const res = await new Promise((resolve, reject) => {
+
+    const asArray = Object.entries(data)
+    const filtered = asArray.filter(([key, value]) => !blacklist.includes(key))
+    const filteredData = Object.fromEntries(filtered)
+
+    const csvWriter = createCsvWriter({
+      path: Runtime.getFunctions()[`/${filePath}`],
+      header: [
+        { id: "name", title: "NAME" },
+        { id: "lang", title: "LANGUAGE" },
+      ],
+    });
+
+    const records = [
+      { name: "Bob", lang: "French, English" },
+      { name: "Mary", lang: "English" },
+    ];
+
+    const res = csvWriter
+      .writeRecords(records) // returns a promise
+      .then(() => {
+        console.log("...Done");
+      });
+  });
 };
 
 /** Parses accounts from CSV and then adds an attributes field per Composite Api */
@@ -85,7 +120,7 @@ exports.parseContactsForCompositeApi = function (csvData, accountMap) {
       Speciality__c: record.Speciality,
       Title: record.Title,
       Website__c: record.WebsiteLink, //needs to be added to custom fields
-      Whatsapp__c: record.whatsapp //needs to be added to custom fields
+      Whatsapp__c: record.whatsapp, //needs to be added to custom fields
     };
   });
 };
@@ -134,7 +169,9 @@ exports.parseChatHistory = function (csvData, contactsMap) {
         (prev, curr, index) =>
           [
             prev,
-            `[${curr.author} @ ${curr.date_created}]\n${curr.body}`,
+            `[${curr.author} @ ${momentTimeZone
+          .tz(curr.date_created, "America/Los_Angeles")
+          .format("MM/DD/YYYY hh:mm A z")}]\n${curr.body}`,
             index != group.length - 1 ? "\n\n" : "",
           ].join(""), //replace start/end quotations.
         ""
