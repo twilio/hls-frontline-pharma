@@ -1,10 +1,10 @@
 # hls-frontline-pharma
 
-*This document is intended to serve as a technical guide for customers
-who are interested in setting up an instance of Frontline that uses Salesforce as its CRM in a pharmaceutical context.*
+_This document is intended to serve as a technical guide for customers
+who are interested in setting up an instance of Frontline that uses Salesforce as its CRM in a pharmaceutical context._
 
-*Installation of this application is supported using the latest versions of Chrome and Firefox.
-Installation via Internet Explorer has not been officially tested and although issues are not expected, unforeseen problems may occur.*
+_Installation of this application is supported using the latest versions of Chrome and Firefox.
+Installation via Internet Explorer has not been officially tested and although issues are not expected, unforeseen problems may occur._
 
 - [Installation Information](#install)
 - [Application Overview](#application)
@@ -15,23 +15,25 @@ Installation via Internet Explorer has not been officially tested and although i
 This section details the requirements for a successful deployment and installation of the prototype application, including the necessary prerequisite steps, the variables that are needed to initiate installation, and the installation steps themselves.
 
 ### Prerequisites
-***
+
+---
+
 The following prerequisites must be satisfied prior to installing the application.
 
 #### Frontline Twilio account
 
-  - Create a Twilio account by signing up [here](https://www.twilio.com/try-twilio)
-  - Once the Twilio account is created,
-    please note the “ACCOUNT SID” and “AUTH TOKEN”
-    from the [Twilio console](https://console.twilio.com/) for use below
-  - If you have multiple Twilio Projects under your account, make sure that you are logged into the Project that you want the application to be deployed to
-  - Search for "Frontline" in the search bar at the top of the Twilio console and select "Overview" in the results
-  - Click the "Create Frontline Service" button
+- Create a Twilio account by signing up [here](https://www.twilio.com/try-twilio)
+- Once the Twilio account is created,
+  please note the “ACCOUNT SID” and “AUTH TOKEN”
+  from the [Twilio console](https://console.twilio.com/) for use below
+- If you have multiple Twilio Projects under your account, make sure that you are logged into the Project that you want the application to be deployed to
+- Search for "Frontline" in the search bar at the top of the Twilio console and select "Overview" in the results
+- Click the "Create Frontline Service" button
 
 ### Download SalesForce CLI
 
-  - Install [this](https://developer.salesforce.com/tools/sfdxcli) tool.
-  - To verify installation, go to a terminal and run `sdfx -v`. If a version number is printed, you have installed the CLI correctly.
+- Install [this](https://developer.salesforce.com/tools/sfdxcli) tool.
+- To verify installation, go to a terminal and run `sdfx -v`. If a version number is printed, you have installed the CLI correctly.
 
 #### Twilio phone number
 
@@ -46,7 +48,7 @@ The following prerequisites must be satisfied prior to installing the applicatio
   plus an additional $0.05 per successful authentication
   (multi-factor authentication leverages Twilio Verify).
   See Twilio SMS pricing and Twilio Verify pricing for more information.</em>
-  
+
 #### Ensure unique application name
 
 In order to deploy correctly, it is important
@@ -58,7 +60,7 @@ in the application directory `hls-frontline-pharma` using a terminal or a comman
 
 #### Salesforce Setup
 
-Frontline requires that there is a SSO integrated with your App in order to sign in to the Frontline app. For that we'll need a main Salesforce Developer Account.  Ensure that you have already signed up for a Twilio Account and created a bare Twilio Frontline Service within that account.
+Frontline requires that there is a SSO integrated with your App in order to sign in to the Frontline app. For that we'll need a main Salesforce Developer Account. Ensure that you have already signed up for a Twilio Account and created a bare Twilio Frontline Service within that account.
 
 - First, sign-up for a Salesforce Developer account [here](https://developer.salesforce.com/signup)
 - Next we'll need to Create a self-signed certificate in Salesforce
@@ -73,11 +75,20 @@ Frontline requires that there is a SSO integrated with your App in order to sign
   - In Salesforce on the left navigation panel, go to Settings -> Identity -> Identity Provider
   - Press "Enable Identity Provider"
   - Find the certificate You created previously with the unique name you gave it and hit save
+- Create your Frontline Service
+  - In the [Twilio Console](https://console.twilio.com/?frameUrl=/console), search for "Frontline" in the search bar at the top of the page and select "Overview"
+  - Click on the blue button that says "Create Frontline service" (assuming you haven't already) and click "Confirm"
+  - After your Frontline service is provisioned, you'll see 4 list items (which are hyperlinks) for which you'll want complete in order
+  - Step 4, labeled, "Connect your CRM", will be for later. Just finish steps 1-3 for now
+    1. First step should be completed for you already
+    2. Click on step 2 and on the right panel Unlock "Handle Inbound Messages with Conversations" by clicking the box next to it and hit save at the bottom of the page
+    3. Go to Frontline's Overview and click on step 3, "Enable `Autocreate a Conversation`" and click on "Autocreate a Conversation". Then click on "Sender Pool" and add your phone number you bought from a previous step to the Sender pool.
 - Get your Twilio Frontline Realm SID
   - In the [Twilio Console](https://console.twilio.com/?frameUrl=/console), search for "Frontline" in the search bar at the top of the page and select "Overview"
   - On the left bar, select Manage > SSO/Log in
   - Copy your Realm SID (i.e. JBccd16179731fe20736f887e6eXXXXXXX)
 - Create a Connected App in Salesforce for Frontline
+
   - On the left-hand panel, navigate to Platform Tools -> Apps -> App Manager
   - Press "New Connected App"
   - Fill in just the red-highlighted portion:
@@ -88,8 +99,19 @@ Frontline requires that there is a SSO integrated with your App in order to sign
     - Paste `https://login.salesforce.com/services/oauth2/success` into "Callback URL"
     - In "Available OAuth Scopes" select both Manage user data via APIs (api) and Perform requests at any time (refresh_token, offline_accss) and add them to "Selected OAuth Scopes" with the Add arrow
     - Create server.crt and server.key files using [these](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_auth_key_and_cert.htm) instructions
-    - Tick "Use digital signatures" and select Choose File, selecting server.crt that you just created
+    - Tick "Use digital signatures" and select Choose File, selecting server.crt that you just created and hit save
+    - Next on the left panel, navigate to Platform Tools -> Apps -> Connected App -> Manage Connected Apps
+      - On the page under the "Action" Column of your connected app, click on "Edit"
+      - Under "OAuth Policies":
+        - Change "Permitted Users" to "Admin approved users are pre-authorized"
+        - Change "IP Relaxation" to "Relax IP restrictions"
+        - Hit Save at the bottom
+    - Now on the left hand panel, navigate to Administration -> Users -> Profiles and find the "System Administrator" profile and click on it.
+      - Click Edit at the top and under "Connected App Access", check on your connected app's name that we created and hit save
     - In a terminal window, run the following code, replacing the variables in triangular brackets:
+      - You can find the values for <your_cusumer_key> in the next page after you hit save
+      - Your <your_sf_username> can be found by clicking on your avatar in the top right corner and clicking on "Settings"
+      - <your_org_name> is usually what you entered when you did the cert step above
 
   ```bash
   sfdx auth:jwt:grant --clientid <your_consumer_key> \
@@ -97,16 +119,16 @@ Frontline requires that there is a SSO integrated with your App in order to sign
   --setdefaultdevhubusername --setalias <your_org_name>
   ```
 
-    - Scroll down to the "Web App Settings" portion and tick "Enable SAML"
-      - Set "Entity Id" to `https://iam.twilio.com/v2/saml2/metadata/<REALM_SID>` replacing <REALM_SID> with what you recorded in the previous section.
-      - Set "ACS URL" to `https://iam.twilio.com/v2/saml2/authenticate/<REALM_SID>`
-      - Set "Subject Type" to `Username`
-      - Set "Name ID Format" to `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`
-      - Set "Issuer" to `https://yourdomain.my.salesforce.com`
-        - The above url can be found by click on your avatar in the top right corner of the Salesforce Console
-      - Set "IdP Certificat" to the you created in the first step (ex. SalesforceSSO)
-      - Untick "Verify Request Signatures" and "Encrypt SAML Response"
-      - Hit Save
+- Scroll down to the "Web App Settings" portion and tick "Enable SAML"
+  - Set "Entity Id" to `https://iam.twilio.com/v2/saml2/metadata/<REALM_SID>` replacing <REALM_SID> with what you recorded in the previous section.
+  - Set "ACS URL" to `https://iam.twilio.com/v2/saml2/authenticate/<REALM_SID>`
+  - Set "Subject Type" to `Username`
+  - Set "Name ID Format" to `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`
+  - Set "Issuer" to `https://yourdomain.my.salesforce.com`
+    - The above url can be found by click on your avatar in the top right corner of the Salesforce Console
+  - Set "IdP Certificate" to the you created in the first step (ex. SalesforceSSO)
+  - Untick "Verify Request Signatures" and "Encrypt SAML Response"
+  - Hit Save
 - Add Custom Attributes
   - Now in the left panel, navigate to Platform Tools -> Apps -> Connected Apps -> Manage Connected Apps
   - Click on your App
@@ -126,11 +148,51 @@ Frontline requires that there is a SSO integrated with your App in order to sign
   - Set "SSO URL" to `https://yourdomain.my.salesforce.com/idp/endpoint/HttpRedirect`
   - Open your certificate you downloaded in the first step in a text editor and paste the contents inside the "X.509 Certificate" text box.
   - Hit Save
+- Deploy your Serverless Project which are the functions in this repo
+  - First take the `server.key` file in the `/JWT` directory we created in a previous step and move it to the `/assets` folder of this repo and rename `server.key` to `server.private.key` (This is the Salesforce key which will be cached inside Twilio Sync)
+  - Fill out all the fields in `.env` file (SYNC_SID optional as it will be created)
+  - run `make service-deploy` at the root level of this directory which deploys your serverless functions needed to connect Frontline and Salesforce
+  - Take note of 5 [protected] endpoints after the deployment completes needed for the next 3 steps:
+    - `https://hls-frontline-pharma-XXXX-dev.twil.io/inbound-routing`
+    - `https://hls-frontline-pharma-XXXX-dev.twil.io/conversation`
+    - `https://hls-frontline-pharma-XXXX-dev.twil.io/crm`
+    - `https://hls-frontline-pharma-XXXX-dev.twil.io/outgoing-conversation`
+    - `https://hls-frontline-pharma-XXXX-dev.twil.io/templates`
+- Configure Inbound Routing
+  - On your Frontline console, navigate to Frontline -> Manage -> Routing
+  - Click on "Custom routing callback URL" and fill in the URL with the first URL above which ends in "/inbound-routing"
+- Configure Conversations Global Webhooks
+  - On the Twilio Console, on the left panel, navigate to Conversations -> Manage -> Global Webhooks
+  - On the page, paste in your `https://hls-frontline-pharma-XXXX-dev.twil.io/conversation` URL to both the "Pre-Event URL" and "Post-Event URL", keep the method to be "HTTP POST"
+  - Under "Webhook Filtering" Section check the following boxes:
+    - `onConversationAdd`
+    - `onMessageAdd`
+    - `onParticipantAdd`
+    - `onConversationAdded`
+    - `onConversationStateUpdated`
+    - `onMessageAdded`
+    - `onParticipantAdded`
+  - Hit Save
+- Configure Voice Integration with Frontline
+  - In the left Twilio Console Panel, navigate to Frontline -> Manage -> Voice Calling
+  - Under "Manage inbound and outbound voice calls", click the "Enabled" Radio button and hit Save
+  - Next go the to console and in the left panel, navigate to Phone Numbers -> Manage -> Active Numbers and click on the phone number associated with your Frontline App
+  - Scroll down to the "Voice" or "Voice & Fax" section
+    - In the "Configure With" dropdown, select "TwiML App"
+    - In the "TwiML App dropdown select "Voice in Frontline" and hit save
+- Finish Configuring/Connecting your CRM
+  - Go to Frontline Overview
+  - Step 4 should be the last step to complete now click it
+  - Fill in the 3 callback URLs from the previous step and click save
 - You're all done! Now Download the Frontline app in the [iOS App Store](https://apps.apple.com/us/app/twilio-frontline/id1541714273) or [Google Play Store](https://play.google.com/store/apps/details?id=com.twilio.frontline)
-and log in with the Workspace ID from the last step and your Salesforce Account Credentials
+  and log in with the Workspace ID from the last step and your Salesforce Account Credentials
+
+#### Common Problems/Errors:
+
+- Outbound routing is not working:
+  - Usually happens when a Salesforce Contact's phone number is not in E. 164 Format "+1234567890"
 
 #### Configuring Twilio to Work with Your SalesForce Instance
-
 
 #### Docker Desktop
 
@@ -150,9 +212,11 @@ $ brew install python-yq    # install yq/xq
 $ yq --version              # confirm installation
 yq 2.13.0
 ```
-  
+
 ### Installation Steps
-***
+
+---
+
 <em>(Installation of this application is supported on the latest versions of Chrome, Firefox, and Safari.
 Installation via Internet Explorer has not been officially tested
 and although issues are not expected, unforeseen problems may occur)</em>
@@ -188,5 +252,6 @@ Open http://localhost:3000/installer/index.html
 #### Terminate installer
 
 To terminate installer:
+
 - Enter Control-C in the terminal where `docker run ...` was executed
 - Stop the `hls-frontline-pharma-installer` docker container via the Docker Desktop

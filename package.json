@@ -10,12 +10,15 @@
   "dependencies": {
     "@twilio-labs/serverless-api": "5.4.1",
     "@twilio/runtime-handler": "1.2.3",
+    "awesome-phonenumber": "3.0.1",
     "axios": "0.27.2",
     "configure-env": "2.0.0-1",
     "csv-parser": "3.0.0",
     "jsforce": "1.11.0",
     "jsonwebtoken": "8.5.1",
     "lodash": "4.17.21",
+    "moment": "2.29.3",
+    "moment-timezone": "0.5.34",
     "twilio": "3.75.1"
   },
   "devDependencies": {
