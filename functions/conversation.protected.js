@@ -5,7 +5,6 @@ const moment = require("moment");
 const momentTimeZone = require("moment-timezone");
 
 exports.handler = async function (context, event, callback) {
-  console.log("EVENT: ", event);
   const twilioClient = context.getTwilioClient();
   let response = new Twilio.Response();
   response.appendHeader("Content-Type", "application/json");
@@ -66,9 +65,50 @@ exports.handler = async function (context, event, callback) {
         );
       }
     }
+    case "onConversationUpdated": {
+      if (event.Attributes) {
+        const attributes = JSON.parse(event.Attributes);
+
+        try {
+          //This is the case where a phone call has just hung up.
+          if (
+            attributes.hasOwnProperty("frontline.events") &&
+            attributes["frontline.events"].find(
+              (event) => event.type === "call_ended"
+            ) &&
+            event.State !== "closed"
+          ) {
+            //get the latest logged event of the phone call
+            const maxDur = attributes["frontline.events"].reduce((a, b) =>
+              a.duration > b.duration ? a : b
+            );
+            const { date: endDateMs, duration } = maxDur;
+            const startDateMs = endDateMs - duration * 1000;
+            const { customer_id } = await getCustomerIdByName(
+              event.FriendlyName,
+              connection
+            );
+            const description = `${duration} second phone call with ${
+              event.FriendlyName
+            } starting at ${momentTimeZone
+              .tz(startDateMs, "America/Los_Angeles")
+              .format("MM/DD/YYYY hh:mm A z")}.`;
+            await createEventSObject(
+              connection,
+              { customer_id },
+              description,
+              [{ dateCreated: endDateMs }, { dateCreated: startDateMs }],
+              "Call"
+            );
+          }
+        } catch (err) {
+          console.log("Could not log voice conversation");
+        }
+      }
+      break;
+    }
     default: {
       console.log("Unknown event type: ", event.EventType);
-      response.setStatusCode(422);
     }
   }
   return callback(null, response);
@@ -78,29 +118,31 @@ const createEventSObject = async (
   conn,
   customerDetails,
   eventDescription,
-  convo
+  convo,
+  subject = "SMS"
 ) => {
   const endTime = moment(convo[0].dateCreated);
   const endDateTime = moment(new Date(convo[0].dateCreated));
   const startTime = moment(convo[convo.length - 1].dateCreated);
   const dateDiff = endTime.diff(startTime, "days");
-  const fourteenDaysPrior = endTime.subtract(14, "days").format("YYYY-MM-DD");
+  const minutesDiff = endTime.diff(startTime, "minutes");
+  const fourteenDaysPrior = endTime.subtract(14, "days").toISOString();
 
   await new Promise((resolve, reject) => {
     conn.sobject("Event").create(
       {
+        DurationInMinutes: minutesDiff,
         Description: eventDescription,
-        EndDateTime: endDateTime,
+        EndDateTime: endDateTime.toISOString(),
         IsAllDayEvent: false,
         WhoId: customerDetails.customer_id,
         StartDateTime:
-          dateDiff > 14
-            ? fourteenDaysPrior
-            : convo[convo.length - 1].dateCreated,
-        Subject: "SMS",
+          dateDiff > 14 ? fourteenDaysPrior : startTime.toISOString(),
+        Subject: subject,
       },
       function (err, ret) {
         if (err || !ret.success) {
+          console.log(err);
           reject(err);
         }
         console.log("Created record id : " + ret.id);
@@ -152,8 +194,35 @@ const parseConversation = (convo, customerDetails) => {
   return description;
 };
 
+const getCustomerIdByName = async (name, sfdcConn) => {
+  let sfdcRecords = [];
+  try {
+    sfdcRecords = await sfdcConn
+      .sobject("Contact")
+      .find(
+        {
+          Name: name,
+        },
+        {
+          Id: 1,
+        }
+      )
+      .sort({ LastModifiedDate: -1 })
+      .limit(1)
+      .execute();
+    if (sfdcRecords.length === 0) {
+      return;
+    }
+    const sfdcRecord = sfdcRecords[0];
+    return {
+      customer_id: sfdcRecord.Id,
+    };
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 const getCustomerByNumber = async (number, sfdcConn) => {
-  console.log("Getting Customer details by #: ", number);
   let sfdcRecords = [];
   try {
     sfdcRecords = await sfdcConn
@@ -171,9 +240,6 @@ const getCustomerByNumber = async (number, sfdcConn) => {
       .sort({ LastModifiedDate: -1 })
       .limit(1)
       .execute();
-    console.log(
-      "Fetched # SFDC records for contact by #: " + sfdcRecords.length
-    );
     if (sfdcRecords.length === 0) {
       return;
     }
