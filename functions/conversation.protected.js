@@ -1,5 +1,7 @@
 const sfdcAuthenticatePath =
   Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
+const blockedContentPath = Runtime.getFunctions()["blocked-content"].path;
+const { processFrontlineMessage } = require(blockedContentPath);
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
 const moment = require("moment");
 const momentTimeZone = require("moment-timezone");
@@ -47,6 +49,23 @@ exports.handler = async function (context, event, callback) {
         );
       }
       break;
+    }
+    case "onMessageAdd": {
+      const response = new Twilio.Response();
+      response.appendHeader("Content-Type", "application/json");
+      response.appendHeader("Access-Control-Allow-Origin", "*");
+      if (!event.Body) {
+        // if body is null, block the request.
+        response.setStatusCode(403);
+        return callback(null, response);
+      }
+      const processedMessage = await processFrontlineMessage(event, response);
+      console.log("hello", processedMessage, response);
+      if (processedMessage && processedMessage.success) {
+        response.setBody(processedMessage);
+      } else {
+        throw new Error("Message Body contains Blocked Word");
+      }
     }
     case "onConversationStateUpdated": {
       // upload conversation to Salesforce
@@ -211,3 +230,16 @@ const setCustomerParticipantProperties = async (
       .catch((e) => console.log("Update customer participant failed: ", e));
   }
 };
+
+async function getConversationParticipant(client, event) {
+  const participants = await client.conversations
+    .conversations(event.ConversationSid)
+    .participants.list();
+  for (const p of participants) {
+    if (!p.identity && p.messagingBinding)
+      if (p.messagingBinding.proxy_address) return p;
+  }
+  for (const p of participants) {
+    if (p.sid == event.ParticipantSid) return p;
+  }
+}
