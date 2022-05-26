@@ -1,7 +1,10 @@
 const sfdcAuthenticatePath =
   Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
 const blockedContentPath = Runtime.getFunctions()["blocked-content"].path;
-const { processFrontlineMessage } = require(blockedContentPath);
+const {
+  processFrontlineMessage,
+  storeBlockedMessage,
+} = require(blockedContentPath);
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
 const moment = require("moment");
 const momentTimeZone = require("moment-timezone");
@@ -59,10 +62,12 @@ exports.handler = async function (context, event, callback) {
         return callback(null, response);
       }
       const processedMessage = await processFrontlineMessage(event, response);
-      console.log("hello", processedMessage, response);
       if (processedMessage && processedMessage.success) {
         response.setBody(processedMessage);
       } else {
+        const customerDetails =
+          (await getCustomerByNumber(customerNumber, connection)) || {};
+        await storeBlockedMessage(event, context, customerDetails);
         throw new Error("Message Body contains Blocked Word");
       }
     }
