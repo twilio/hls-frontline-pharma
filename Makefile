@@ -134,6 +134,7 @@ tail-log: get-service-sid get-environment-sid
 
 
 create-rsa-private-key-n-ssl-cert:
+# reference: https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_auth_key_and_cert.htm
 	rm -f server.private.key
 	rm -f server.crt
 	openssl genrsa -des3 -passout pass:password -out server.pass.key 2048
