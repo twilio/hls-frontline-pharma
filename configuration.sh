@@ -49,6 +49,10 @@ if [[ "${1}" == "SALESFORCE_URL" ]]; then
     if [[ "${yn}" == "n" ]] || [[ -z ${SALESFORCE_URL} ]]; then
       echo -n 'Enter SALESFORCE_URL: '
       read SALESFORCE_URL
+      if [[ ! "${SALESFORCE_URL}" == *salesforce* ]]; then
+        echo "Entered URL ${SALESFORCE_URL} does NOT is wrong!!! must end in salesforce.com!!!"
+        yn="n"
+      fi
     fi
     [[ "${yn}" == "n" ]]
   do :; done

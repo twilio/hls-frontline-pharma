@@ -1,15 +1,16 @@
 # hls-frontline-pharma
 
-- [Installation](#installation)
+- [Installation](#initial-installation)
+- [Deploy Blueprint Service](#deploy-blueprint-service)
 - [Developer Notes](#developer-notes)
 
 
 ---
 ---
 
-## Installation
+## Initial Installation
 
-This section details the requirements for a successful provisioning and installation of the blueprint application, including the necessary prerequisite steps, the variables that are needed to initiate installation, and the installation steps themselves.
+This section details the requirements for a successful initial provisioning and installation of the blueprint application, including the necessary prerequisite steps, the variables that are needed to initiate installation, and the installation steps themselves.
 
 - [Prerequsites](#prerequisites)
 - [Retrieve Latest Blueprint from Github](#retrieve-latest-blueprint-from-github)
@@ -32,7 +33,11 @@ After installation make sure to start Docker desktop.
 #### SalesForce CLI (sfdx)
 
 - Download and install from https://developer.salesforce.com/tools/sfdxcli.
-- To verify installation, go to a terminal and run `sdfx --version`. If a version number is printed, you have installed the CLI correctly.
+- To verify installation, go to a terminal and run
+  ```shell
+  sfdx --version
+  ```
+  If a version number is printed, you have installed the CLI correctly.
 
 
 ---
@@ -76,7 +81,9 @@ Note that Flex service **CANNOT** be enabled on this Twilio account.
 #### 2. Create Organization
 
 - Open Admin Center at https://www.twilio.com/console/admin
-- Create 'Organization', you can name it anything (e.g., OwlHealth)
+- If opening errors, then look for `'Create an Organization'` menu item from the console account selection menu
+- Click `'Create an Organization'`
+- Create an organization, you can name it anything (e.g., OwlHealth)
 
 
 #### 3. Buy Twilio Phone Number
@@ -246,7 +253,7 @@ For that we'll need a Salesforce Developer Account.
   - Click ![](https://img.shields.io/badge/-Save-blue) at the bottom right
 - Scroll down to `Custom Attributes` section
   - Click ![](https://img.shields.io/badge/-New-blue)
-  - Enter `Attribute Key` to `role`
+  - Enter `Attribute Key` to `roles`
   - Enter `Attribute value` to `'agent'` (including enclosing single quotes)
   - Click ![](https://img.shields.io/badge/-Save-blue)
   
@@ -286,54 +293,7 @@ For that we'll need a Salesforce Developer Account.
 ---
 ### Deploy Frontline Serverless
 
-Please ensure that you do not have any running processes
-that is listening on port `3000`
-such as development servers or another HLS installer still running.
-
-#### 1. Build Installer Docker Image
-
-```shell
-docker build --tag hls-frontline-pharma-installer --no-cache .
-```
-
-If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.
-
-#### 2. Run Installer Docker Container
-
-Replace `${TWILIO_ACCOUNT_SID}` and `${TWILIO_AUTH_TOKEN}` with that of your target Twilio account.
-
-```shell
-docker run --name hls-frontline-pharma-installer --rm --publish 3000:3000  \
---env ACCOUNT_SID=${TWILIO_ACCOUNT_SID} --env AUTH_TOKEN=${TWILIO_AUTH_TOKEN} \
---interactive --tty hls-frontline-pharma-installer
-```
-
-If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.
-
-
-#### 3. Open installer in browser
-
-- Open http://localhost:3000/installer/index.html
-- Enter the following information:
-
-  |Field|Value|
-  |---:|---|
-  |Administrator|Your mobile phone number for receiving MFA in E.164 format
-  |Application Password|password for applciation administrator page access<br/>(recommend just using `password`)
-  |Sf Consumer Key|**SALESFORCE_API_KEY**
-  |Sf Username|**SALESFORCE_USERNAME**
-  |Sf Instance Url|**SALESFORCE_URL**<br/>(e.g., https\://twilio-b3-dev-ed.my.salesforce.com)
-
-- Click ![](https://img.shields.io/badge/-Deploy-blue) at the bottom and wait ...
-- When *'✔ Application is deployed'*, deployment is complete
-
-
-#### 4. Terminate installer
-
-To terminate installer:
-
-- Enter Control-C in the terminal where `docker run ...` was executed; or
-- Stop the `hls-frontline-pharma-installer` docker container via the Docker Desktop
+Follow the steps in [Deploy Blueprint Service](#deploy-blueprint-service)
 
 
 ---
@@ -430,10 +390,67 @@ To terminate installer:
   - Usually happens when a Salesforce Contact's phone number is not in E. 164 Format "+1234567890"
 
 
+---
+---
+## Deploy Blueprint Service
+
+Frontline Twilio & Salesforce accounts must be already provisioned.
+
+Please ensure that you do not have any running processes
+that is listening on port `3000`
+such as development servers or another HLS installer still running.
+
+Make sure to increase the docker desktop memory from default 2GB to 6GB.
+
+#### 1. Build Installer Docker Image
+
+```shell
+docker build --tag hls-frontline-pharma-installer --no-cache .
+```
+
+If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.
+
+#### 2. Run Installer Docker Container
+
+Replace `${TWILIO_ACCOUNT_SID}` and `${TWILIO_AUTH_TOKEN}` with that of your target Twilio account.
+
+```shell
+docker run --name hls-frontline-pharma-installer --rm --publish 3000:3000  \
+--env ACCOUNT_SID=${TWILIO_ACCOUNT_SID} --env AUTH_TOKEN=${TWILIO_AUTH_TOKEN} \
+--interactive --tty hls-frontline-pharma-installer
+```
+
+If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.
+
+
+#### 3. Open installer in browser
+
+- Open http://localhost:3000/installer/index.html
+- Enter the following information:
+
+  |Field|Value|
+  |---:|---|
+  |Administrator|Your mobile phone number for receiving MFA in E.164 format
+  |Application Password|password for applciation administrator page access<br/>(recommend just using `password`)
+  |Sf Consumer Key|**SALESFORCE_API_KEY**
+  |Sf Username|**SALESFORCE_USERNAME**
+  |Sf Instance Url|**SALESFORCE_URL**<br/>(e.g., https\://twilio-b3-dev-ed.my.salesforce.com)
+
+- Click ![](https://img.shields.io/badge/-Deploy-blue) at the bottom and wait ...
+- When *'✔ Application is deployed'*, deployment is complete
+
+
+#### 4. Terminate installer
+
+To terminate installer:
+
+- Enter Control-C in the terminal where `docker run ...` was executed; or
+- Stop the `hls-frontline-pharma-installer` docker container via the Docker Desktop
+
 
 
 ---
 ---
-# Developer Notes
+## Developer Notes
 
 TBD
