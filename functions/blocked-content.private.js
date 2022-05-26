@@ -1,7 +1,7 @@
 const { getParam } = require(Runtime.getFunctions()["helpers"].path);
-const { SYNC_LIST_NAME } = require(Runtime.getFunctions()["constants"].path);
-
-const blockedKeywords = ["apple", "pear", "banana", "strawberry"];
+const { SYNC_LIST_NAME, BLOCKED_WORDS } = require(Runtime.getFunctions()[
+  "constants"
+].path);
 
 const isFrontlineWorker = (event) => {
   return event.ClientIdentity ? true : false;
@@ -9,7 +9,7 @@ const isFrontlineWorker = (event) => {
 
 const processFrontlineMessage = (event, response) => {
   const allLower = event.Body.toLowerCase();
-  const containsBlockedWord = !blockedKeywords.every(
+  const containsBlockedWord = !BLOCKED_WORDS.every(
     (blockedWord) => !allLower.includes(blockedWord)
   );
   if (containsBlockedWord && isFrontlineWorker(event)) {
@@ -49,7 +49,7 @@ const storeBlockedMessage = async (event, context, customerDetails) => {
           customerNumber: customerDetails.mobile_phone,
         },
       })
-      .then((si) => console.log(si.sid));
+      .then((si) => console.log("New SyncItem Sid: ", si.sid));
   } catch (err) {
     console.error("storeBlockedMessage() Error:", err);
   }
