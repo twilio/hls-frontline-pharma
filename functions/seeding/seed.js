@@ -34,6 +34,7 @@ exports.handler = async function (context, event, callback) {
 
   const response = new Twilio.Response();
   response.appendHeader("Content-Type", "application/json");
+  response.appendHeader("Access-Control-Allow-Origin", "*");
   response.setStatusCode(200);
   try {
     const endpoint = await getParam(context, "SFDC_INSTANCE_URL");
@@ -145,7 +146,7 @@ exports.handler = async function (context, event, callback) {
       true
     );
 
-    console.log(chatUploadResult)
+    console.log(chatUploadResult);
 
     if (chatUploadResult.error) {
       response.setStatusCode(400);
