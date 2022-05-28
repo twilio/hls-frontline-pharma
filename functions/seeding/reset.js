@@ -1,6 +1,11 @@
 const sfdcAuthenticatePath =
   Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
+const { path } = Runtime.getFunctions()["authentication-helper"];
+const { AuthedHandler } = require(path);
+const { twilioAuthenticatePath } =
+  Runtime.getFunctions()["authentication-helper"];
+const { isValidAppToken } = require(twilioAuthenticatePath);
 const staticPath = Runtime.getFunctions()["seeding/static"].path;
 const { customFields } = require(staticPath);
 const sObjectspath = Runtime.getFunctions()["seeding/sobject"].path;
@@ -14,7 +19,7 @@ const opportunitiesSOQL = "SELECT Id FROM Opportunity LIMIT 200";
 const entitlementsSOQL = "SELECT Id FROM Entitlement LIMIT 200";
 
 /** Wipes SF account by deleting all default and custom Entitlements, Opportunities, Cases, Accounts, Contacts and custom fields. */
-exports.handler = async function (context, event, callback) {
+exports.handler = AuthedHandler(async (context, event, callback)=> {
   const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
   const { connection } = sfdcConnectionIdentity;
 
@@ -24,6 +29,7 @@ exports.handler = async function (context, event, callback) {
   response.setStatusCode(200);
 
   try {
+    
     const accounts = await runSOQL(connection, accountsSOQL);
     const contacts = await runSOQL(connection, contactsSOQL);
     const cases = await runSOQL(connection, casesSOQL);
@@ -77,4 +83,4 @@ exports.handler = async function (context, event, callback) {
   }
 
   return callback(null, response);
-};
+})

@@ -20,59 +20,62 @@
  * --------------------------------------------------------------------------------
  */
 
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
+const { FaxInstance } = require("twilio/lib/rest/fax/v1/fax");
 
 const MFA_TOKEN_DURATION = 5 * 60;
 const APP_TOKEN_DURATION = 30 * 60;
 const REFRESH_TOKEN_DURATION = 24 * 60 * 60;
 
 function isValidPassword(password, context) {
-    return (checkDisableAuthForLocalhost(context) ||
-        password === context.APPLICATION_PASSWORD);
+  return (
+    checkDisableAuthForLocalhost(context) ||
+    password === context.APPLICATION_PASSWORD
+  );
 }
 
 // --------------------------------------------------------
 function createAppToken(issuer, context) {
-    return jwt.sign({}, context.AUTH_TOKEN, {
-        expiresIn: APP_TOKEN_DURATION,
-        audience: 'app',
-        issuer,
-        subject: 'administrator',
-    });
+  return jwt.sign({}, context.AUTH_TOKEN, {
+    expiresIn: APP_TOKEN_DURATION,
+    audience: "app",
+    issuer,
+    subject: "administrator",
+  });
 }
 
 // --------------------------------------------------------
 function createRefreshToken(issuer, context) {
-    return jwt.sign({}, context.AUTH_TOKEN, {
-        expiresIn: REFRESH_TOKEN_DURATION,
-        audience: 'refresh',
-        issuer,
-        subject: 'administrator',
-    });
+  return jwt.sign({}, context.AUTH_TOKEN, {
+    expiresIn: REFRESH_TOKEN_DURATION,
+    audience: "refresh",
+    issuer,
+    subject: "administrator",
+  });
 }
 
 // --------------------------------------------------------
 
 function createMfaToken(issuer, context) {
-    if (checkDisableAuthForLocalhost(context)) {
-        return createAppToken(issuer, context);
-    }
-    return jwt.sign({}, context.AUTH_TOKEN, {
-        expiresIn: MFA_TOKEN_DURATION,
-        audience: 'mfa',
-        issuer,
-        subject: 'administrator',
-    });
+  if (checkDisableAuthForLocalhost(context)) {
+    return createAppToken(issuer, context);
+  }
+  return jwt.sign({}, context.AUTH_TOKEN, {
+    expiresIn: MFA_TOKEN_DURATION,
+    audience: "mfa",
+    issuer,
+    subject: "administrator",
+  });
 }
 
 // --------------------------------------------------------
 function checkDisableAuthForLocalhost(context) {
-    return (
-        context.DOMAIN_NAME &&
-        context.DOMAIN_NAME.startsWith('localhost') &&
-        context.DISABLE_AUTH_FOR_LOCALHOST &&
-        context.DISABLE_AUTH_FOR_LOCALHOST === 'true'
-    );
+  return (
+    context.DOMAIN_NAME &&
+    context.DOMAIN_NAME.startsWith("localhost") &&
+    context.DISABLE_AUTH_FOR_LOCALHOST &&
+    context.DISABLE_AUTH_FOR_LOCALHOST === "true"
+  );
 }
 
 /* ----------------------------------------------------------------------------------------------------
@@ -84,58 +87,88 @@ function checkDisableAuthForLocalhost(context) {
  * ----------------------------------------------------------------------------------------------------
  */
 async function getVerifyServiceId(context) {
-  const { getParam } = require(Runtime.getFunctions()['helpers'].path);
+  const { getParam } = require(Runtime.getFunctions()["helpers"].path);
 
-  return await getParam(context, 'VERIFY_SID');
+  return await getParam(context, "VERIFY_SID");
 }
 
 // -----------------------------------------------------
 
 function isValidMfaToken(token, context) {
-    try {
-        return (
-            checkDisableAuthForLocalhost(context) ||
-            jwt.verify(token, context.AUTH_TOKEN, { audience: 'mfa' })
-        );
-    } catch (err) {
-        return false;
-    }
+  try {
+    return (
+      checkDisableAuthForLocalhost(context) ||
+      jwt.verify(token, context.AUTH_TOKEN, { audience: "mfa" })
+    );
+  } catch (err) {
+    return false;
+  }
 }
 
 // ---------------------------------------------------------
 function isValidAppToken(token, context) {
-    try {
-        return (
-            checkDisableAuthForLocalhost(context) ||
-            jwt.verify(token, context.AUTH_TOKEN, { audience: 'app' })
-        );
-    } catch (err) {
-        console.log(err);
-        return false;
-    }
+  try {
+    return (
+      checkDisableAuthForLocalhost(context) ||
+      jwt.verify(token, context.AUTH_TOKEN, { audience: "app" })
+    );
+  } catch (err) {
+    console.log(err);
+    return false;
+  }
 }
 
 // ---------------------------------------------------------
 function isValidRefreshToken(token, context) {
-    try {
-        return (
-            checkDisableAuthForLocalhost(context) ||
-            jwt.verify(token, context.AUTH_TOKEN, { audience: 'refresh' })
-        );
-    } catch (err) {
-        console.log(err);
-        return false;
-    }
+  try {
+    return (
+      checkDisableAuthForLocalhost(context) ||
+      jwt.verify(token, context.AUTH_TOKEN, { audience: "refresh" })
+    );
+  } catch (err) {
+    console.log(err);
+    return false;
+  }
 }
+
+/**
+ *
+ * @param {*} context
+ * @param {*} event
+ * @param {*} callback
+ * @param {(context,event,callback)=>void} fxn
+ * @returns callback
+ */
+const AuthedHandler = (fxn) => {
+  return (context, event, callback) => {
+    const response = new Twilio.Response();
+    response.appendHeader("Content-Type", "application/json");
+    response.appendHeader("Access-Control-Allow-Origin", "*");
+    response.setStatusCode(401);
+    if (!event.token) {
+      response.setBody({
+        error: true,
+        errorObject: "No access token was included.",
+      });
+      return callback(null, response);
+    } else if (!isValidAppToken(event.token, context)) {
+      response.setBody({ error: true, errorObject: "Invalid access token." });
+      return callback(null, response);
+    }
+    return fxn(context, event, callback);
+  };
+};
+
 // ---------------------------------------------------------
 module.exports = {
-    isValidPassword,
-    createMfaToken,
-    createAppToken,
-    createRefreshToken,
-    isValidMfaToken,
-    getVerifyServiceId,
-    isValidAppToken,
-    isValidRefreshToken,
-    checkDisableAuthForLocalhost
-}
+  isValidPassword,
+  createMfaToken,
+  createAppToken,
+  createRefreshToken,
+  isValidMfaToken,
+  getVerifyServiceId,
+  isValidAppToken,
+  isValidRefreshToken,
+  checkDisableAuthForLocalhost,
+  AuthedHandler,
+};

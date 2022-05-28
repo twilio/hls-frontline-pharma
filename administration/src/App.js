@@ -12,7 +12,8 @@ function App() {
   return (
     <>
       <Header />
-      {mfaAccessToken ? <Content /> : <Login />}
+      {/*       {mfaAccessToken ? <Content /> : <Login />} */}
+      <Content />
       <Footer />
     </>
   );
