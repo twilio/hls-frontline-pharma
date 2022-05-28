@@ -16,7 +16,10 @@ COPY functions /hls-installer/functions
 # install node dependencies in package.json
 RUN npm install
 
+
+
 # expose default port for running locally
 EXPOSE 3000
+EXPOSE 3001
 
 CMD ["twilio", "serverless:start", "--load-local-env"]

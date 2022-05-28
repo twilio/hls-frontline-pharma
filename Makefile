@@ -1,3 +1,14 @@
+# description: Your Twilio account SID
+# required: true
+# configurable: false
+# format: text
+TWILIO_ACCOUNT_SID=AC034047d60669816878c8061a47f93e93
+
+# description: Your Twilio Auth Token
+# required: true
+# configurable: false
+# format: text
+TWILIO_AUTH_TOKEN=1edd48269d3b1249356b7b573b723604
 # --------------------------------------------------------------------------------------------------------------
 # FOR DEVELOPER USE ONLY!!!
 # --------------------------------------------------------------------------------------------------------------
