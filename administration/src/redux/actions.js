@@ -43,4 +43,35 @@ export const verifyMfa = createAsyncThunk(
   }
 );
 
+export const resetAndSeed = createAsyncThunk(
+  "[Admin] Reset and Seed",
+  async (_params, { rejectWithValue }) => {
+    try {
+      const reset = await fetch(
+        `https://${process.env.REACT_APP_BACKEND}/seeding/reset`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (reset.error)
+        return rejectWithValue("Could not reset Salesforce data.");
+
+      const seed = await fetch(
+        `https://${process.env.REACT_APP_BACKEND}/seeding/seed`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (seed.error) return rejectWithValue("Could not seed Salesforce data.");
+
+      return;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
+  }
+);
+
+//TODO: Implement for debugging only
 export const clearState = createAction("CLEAR_STATE");
