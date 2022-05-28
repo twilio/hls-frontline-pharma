@@ -1,39 +1,30 @@
-import { createRef, useCallback, useState } from "react";
+import { createRef, useCallback, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { resetAndSeed as resetAndSeedAction } from "../redux/actions";
+import { resetAndSeedState as resetAndSeedStateSelector } from "../redux/selectors";
+import LoadingText from "./LoadingText";
 
 const Content = () => {
-  const [seeding, setSeeding] = useState(false);
-  const seedBtnRef = createRef(null);
+  const dispatch = useDispatch();
+  const resetAndSeedState = useSelector(resetAndSeedStateSelector);
 
-  //TODO: Make this an action
-  const resetAndSeed = useCallback(async (e) => {
-    e.preventDefault();
-    setSeeding(true);
-    await fetch(`https://${process.env.REACT_APP_BACKEND}/seeding/reset`, {
-      method: "POST",
-    }).then(() =>
-      fetch(`https://${process.env.REACT_APP_BACKEND}/seeding/seed`, {
-        method: "POST",
-      }).then((resp) => setSeeding(false))
-    );
-  }, []);
+  const resetAndSeed = useCallback(
+    (e) => {
+      e.preventDefault();
+      dispatch(resetAndSeedAction());
+    },
+    [dispatch]
+  );
+
 
   return (
     <>
       <form>
         <div>
-          {seeding && (
-            <p>
-              <strong>Seeding data...</strong>
-            </p>
-          )}
           <p>Reset Salesforce account and seed data.</p>
+          <LoadingText fetchSelector={resetAndSeedState} name={"Seed Data"} />
         </div>
-        <button
-          id="btn-authenticate"
-          class="button"
-          onClick={resetAndSeed}
-          ref={seedBtnRef}
-        >
+        <button id="btn-authenticate" className="button" onClick={resetAndSeed}>
           Seed Data
         </button>
       </form>
