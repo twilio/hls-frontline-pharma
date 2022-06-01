@@ -1,5 +1,12 @@
 import { createReducer } from "@reduxjs/toolkit";
-import { login, resetAndSeed, verifyMfa, readCsv, listCsvs } from "./actions";
+import {
+  login,
+  resetAndSeed,
+  verifyMfa,
+  readCsv,
+  listCsvs,
+  writeCsv,
+} from "./actions";
 
 const fetchingState = {
   fetching: false,
@@ -28,6 +35,9 @@ const initialState = {
     ...fetchingState,
   },
   resetAndSeedState: {
+    ...fetchingState,
+  },
+  writeCsvState: {
     ...fetchingState,
   },
 };
@@ -192,6 +202,36 @@ const reducer = createReducer(initialState, (builder) => {
         },
       };
     })
+    .addCase(writeCsv.pending, (state) => {
+      return {
+        ...state,
+        writeCsvState: {
+          fetching: true,
+          fetchingFailure: false,
+          fetchingSuccess: false,
+        },
+      };
+    })
+    .addCase(writeCsv.fulfilled, (state) => {
+      return {
+        ...state,
+        writeCsvState: {
+          fetching: false,
+          fetchingFailure: false,
+          fetchingSuccess: true,
+        },
+      };
+    })
+    .addCase(writeCsv.rejected, (state) => {
+      return {
+        ...state,
+        writeCsvState: {
+          fetching: false,
+          fetchingFailure: true,
+          fetchingSuccess: false,
+        },
+      };
+    });
 });
 
 export default reducer;

@@ -56,7 +56,6 @@ const Content = () => {
   ]);
 
  const spreadsheets = useMemo(()=>{
-   console.log(readCsvState)
   if(readCsvState.fetchingSuccess && readCsvState.data.length > 0){
     const res =  readCsvState.data.map((csv)=>{
       return <div style={{paddingTop: "2rem"}}>
@@ -64,8 +63,6 @@ const Content = () => {
         <hr />
       </div>
     })
-
-    console.log("res")
     return res
   }
  }, [
@@ -86,8 +83,7 @@ const Content = () => {
         </button>
       </form>
       <div>
-        <LoadingText fetchSelector={listCsvState} name={"CSV Templates"} />
-        {!listCsvState.fetching && listCsvState.fetchingSuccess ? spreadsheets : <></>}
+        {spreadsheets}
       </div>
     </>
   );
