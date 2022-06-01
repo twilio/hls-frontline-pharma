@@ -20,6 +20,7 @@ exports.handler = async function (context, event, callback) {
 
   const response = new Twilio.Response();
   response.appendHeader("Content-Type", "application/json");
+  response.appendHeader("Access-Control-Allow-Origin", "*");
   response.setStatusCode(200);
 
   try {
