@@ -27,6 +27,9 @@ const initialState = {
   resetAndSeedState: {
     ...fetchingState,
   },
+  resetAndSeedState: {
+    ...fetchingState,
+  },
 };
 
 const reducer = createReducer(initialState, (builder) => {

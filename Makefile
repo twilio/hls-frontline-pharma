@@ -143,6 +143,10 @@ run-serverless:
 tail-log: get-service-sid get-environment-sid
 	twilio serverless:logs --service-sid=$(SERVICE_SID) --environment=$(ENVIRONMENT_SID) --tail
 
+reset-and-seed: 
+	curl -X POST http://localhost:3000/seeding/reset
+	curl -X POST http://localhost:3000/seeding/seed
+
 
 create-rsa-private-key-n-ssl-cert:
 # reference: https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_auth_key_and_cert.htm

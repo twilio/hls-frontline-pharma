@@ -1,6 +1,7 @@
+
 # hls-frontline-pharma
 
-- [Installation](#initial-installation)
+- [Installation](#installation)
 - [Deploy Blueprint Service](#deploy-blueprint-service)
 - [Developer Notes](#developer-notes)
 
@@ -8,7 +9,7 @@
 ---
 ---
 
-## Initial Installation
+## Installation
 
 This section details the requirements for a successful initial provisioning and installation of the blueprint application, including the necessary prerequisite steps, the variables that are needed to initiate installation, and the installation steps themselves.
 
@@ -18,6 +19,7 @@ This section details the requirements for a successful initial provisioning and 
 - [Provision Salesforce Account](#provision-salesforce-account)
 - [Deploy Frontline Serverless](#deploy-frontline-serverless)
 - [Configure Frontline SSO to Salesforce](#configure-frontline-sso-with-salesforce)
+- [Add User to Salesforce Account](#add-user-to-salesforce-account)
 
 ---
 ### Prerequisites
@@ -37,7 +39,10 @@ After installation make sure to start Docker desktop.
   ```shell
   sfdx --version
   ```
-  If a version number is printed, you have installed the CLI correctly.
+  If a version number is printed, you have installed the CLI correctly like below
+  ```shell
+  sfdx-cli/7.151.1 darwin-x64 node-v16.13.1
+  ```
 
 
 ---
@@ -84,7 +89,9 @@ Note that Flex service **CANNOT** be enabled on this Twilio account.
 - If opening errors, then look for `'Create an Organization'` menu item from the console account selection menu
 - Click `'Create an Organization'`
 - Create an organization, you can name it anything (e.g., OwlHealth)
+- Sample Organization page below
 
+![](images/twilio-organization-show.png)
 
 #### 3. Buy Twilio Phone Number
 
@@ -172,13 +179,12 @@ For that we'll need a Salesforce Developer Account.
 - In `Change Your Password` page, enter your password and remember it as you'll need it to login on the frontline app
 - Click ![](https://img.shields.io/badge/-Change_Password-blue)
 - You will be logged into your Salesforce account
-  - **LIGHTNING_HOSTNAME**: used below (e.g., twilio-b3-dev-ed.lightning.force.com)
 
 
 #### 2. Create IDP Certificate
 
 - From `Setup Home`, navigate to `SETTINGS ⮕ Security ⮕ Certificate and Key Management`
-  - https://**LIGHTNING_HOSTNAME**/lightning/setup/CertificatesAndKeysManagement/home
+<!-- https://**LIGHTNING_HOSTNAME**/lightning/setup/CertificatesAndKeysManagement/home -->
 - Click ![](https://img.shields.io/badge/-Create_Self_Signed_Certificate-blue)
 - Enter the following information:
 
@@ -194,22 +200,28 @@ For that we'll need a Salesforce Developer Account.
 
 - Click ![](https://img.shields.io/badge/-Save-blue)
 - Click ![](https://img.shields.io/badge/-Download_Certificate-blue) that will download `SalesforceIDP.crt` file to `~/Downloads` folder for later use
+- Sample screen below
+
+  ![](images/salesforce-idp-certificate.png)
 
 
 #### 3. Enable Identity Provider
 
 - From `Setup Home`, navigate to `SETTINGS ⮕ Identity ⮕ Identity Provider`
-  - https://**LIGHTNING_HOSTNAME**/lightning/setup/IdpPage/home
+<!-- https://**LIGHTNING_HOSTNAME**/lightning/setup/IdpPage/home -->
 - Click ![](https://img.shields.io/badge/-Enable_Identity_Provider-blue)
 - Select certificate `SalesforceIDP`
 - Click ![](https://img.shields.io/badge/-Save-blue)
 - Select ![](https://img.shields.io/badge/-OK-blue) to warning dialog about IdP Certificate change
+- Sample screen below
+
+  ![](images/salesforce-identity-provider.png)
 
 
 #### 4. Create ConnectedApp for Frontline
 
 - From `Setup Home`, navigate to `PLATFORM TOOLS ⮕ Apps ⮕ App Manager`
-  - https://**LIGHTNING_HOSTNAME**/lightning/setup/NavigationMenus/home
+<!-- https://**LIGHTNING_HOSTNAME**/lightning/setup/NavigationMenus/home -->
 - Click ![](https://img.shields.io/badge/-New_Connected_App-blue) in upper right
 - In `Basic Information` section, fill in the following:
 
@@ -240,26 +252,34 @@ For that we'll need a Salesforce Developer Account.
 
 - Click ![](https://img.shields.io/badge/-Save-blue) at the bottom
 - Click ![](https://img.shields.io/badge/-Continue-blue) on the next page
+- Sample screen below
+
+  ![](images/salesforce-connected-app.png)
 
 
 #### 5. Configure FrontlinePharma ConnectedApp
 
 - From `Setup Home`, navigate to `PLATFORM TOOLS ⮕ Apps ⮕ Connected Apps ⮕ Manage Connected Apps`
-  - https://**LIGHTNING_HOSTNAME**/lightning/setup/ConnectedApplication/home
+<!-- https://**LIGHTNING_HOSTNAME**/lightning/setup/ConnectedApplication/home -->
 - Select `FrontlinePharma` app
 - Scroll down to `Profiles` section
   - Click ![](https://img.shields.io/badge/-Manage_Profiles-blue)
   - Select `Standard User` & `System Administrator` profiles
   - Click ![](https://img.shields.io/badge/-Save-blue) at the bottom right
+  - Sample screen below
+  ![](images/salesforce-profiles.png)
+
 - Scroll down to `Custom Attributes` section
   - Click ![](https://img.shields.io/badge/-New-blue)
   - Enter `Attribute Key` to `roles`
   - Enter `Attribute value` to `'agent'` (including enclosing single quotes)
   - Click ![](https://img.shields.io/badge/-Save-blue)
+  - Sample screen below
+  ![](images/salesforce-custom-attributes.png)
   
 
 - From `Setup Home`, navigate to `PLATFORM TOOLS ⮕ Apps ⮕ Connected Apps ⮕ Manage Connected Apps`
-  - https://**LIGHTNING_HOSTNAME**/lightning/setup/ConnectedApplication/home
+<!-- https://**LIGHTNING_HOSTNAME**/lightning/setup/ConnectedApplication/home -->
 - Click ![](https://img.shields.io/badge/-Edit-blue) button to the left of `FrontlinePharma` App
 - In `OAuth Policies` section,
 
@@ -269,15 +289,21 @@ For that we'll need a Salesforce Developer Account.
   |IP Relaxation|Change to `Relax IP restrictions`
 
 - Click ![](https://img.shields.io/badge/-Save-blue) button at the bottom
+- Sample screen below
+![](images/salesforce-oauth-policies.png)
 
 
 #### 6. Authorize ConnectedApp to Frontline
 
 - From `Setup Home`, navigate to `PLATFORM TOOLS ⮕ Apps ⮕ App Manager`
-  - https://**LIGHTNING_HOSTNAME**/lightning/setup/NavigationMenus/home
+<!-- https://**LIGHTNING_HOSTNAME**/lightning/setup/NavigationMenus/home -->
 - Locate `FrontlinePharma` app and click ![](https://img.shields.io/badge/-View-blue) from the right drop down menu
 - In `API (Enable OAuth Settings)` section:
   - Save Consumer Key by executing `source ./configuration.sh SALESFORCE_API_KEY`
+- Sample screen below
+![](images/salesforce-api.png)
+
+
 - Open a terminal and cd to your `hls-frontline-pharma` folder
 - Execute the following script replacing **SALESFORCE_API_KEY** and **SALESFORCE_USERNAME** below with your values<br/>
   or generate by executing `source ./configuration.sh`
@@ -287,7 +313,7 @@ For that we'll need a Salesforce Developer Account.
   --clientid SALESFORCE_API_KEY \
   --jwtkeyfile assets/server.private.key \
   --username SALESFORCE_USERNAME \
-  --setdefaultdevhubusername --setalias owlhealth
+  --setdefaultdevhubusername --setalias SALESFORCE_USERNAME
   ```
 
 ---
@@ -313,6 +339,8 @@ Follow the steps in [Deploy Blueprint Service](#deploy-blueprint-service)
   |X.509 Certificate|paste the contents of executing `cat ~/Download/SalesforceIDP.crt`<br/><br/>`-----BEGIN CERTIFICATE-----`<br/>`MIIEcjCCA1qgAwIBAgIOAYD5aqycAAAAABDSggIwDQYJKoZIhvcNAQELBQAwfjEW`<br/>...<br/>`-----END CERTIFICATE-----`
 
 - Click ![](https://img.shields.io/badge/-Save-blue) button at the bottom
+- Sample screen below
+![](images/frontline-sso.png)
 
 
 #### 2. Configure Frontline Routing & Callbacks
@@ -321,12 +349,17 @@ Follow the steps in [Deploy Blueprint Service](#deploy-blueprint-service)
 - Click service named `hls-frontline-pharma`
 - Scroll to the bottom and note the hostname just above ![](https://img.shields.io/badge/-Deploy_All-blue) button (e.g., hls-frontline-pharma-6110-dev.twil.io)<br/>
   and save by executing `source ./configuration.sh FRONTLINE_SERVICE_HOSTNAME`
+- Sample screen below
+  ![](images/frontline-service-hostname.png)
 
 
 - Open Frontline Manage Routing at https://www.twilio.com/console/frontline/routing
 - Click on `'Custom routing'` radio button
 - Enter for 'Custom routing callback URL', `https://FRONTLINE_SERVICE_HOSTNAME/inbound-routing`
 - Click ![](https://img.shields.io/badge/-Save-blue) button at the bottom
+- Sample screen below
+
+  ![](images/frontline-routing.png)
 
 
 - Open Frontline Manage Callbacks https://www.twilio.com/console/frontline/configure
@@ -339,6 +372,8 @@ Follow the steps in [Deploy Blueprint Service](#deploy-blueprint-service)
   |Templates Callback URL             |https://**FRONTLINE_SERVICE_HOSTNAME**/template
 
 - Click ![](https://img.shields.io/badge/-Save-blue) button at the bottom
+- Sample screen below
+  ![](images/frontline-callback.png)
 
 
 #### 3. Configure Conversation Global Webhooks
@@ -354,6 +389,8 @@ Follow the steps in [Deploy Blueprint Service](#deploy-blueprint-service)
   |Post-webhooks |Select<br/>`onConversationAdded`, `onConversationUpdated`, `onConversationStateUpdated`<br/>`onMessageAdded`<br/>`onParticipantAdded`
 
 - Click ![](https://img.shields.io/badge/-Save-blue) button at the bottom
+- Sample screen below
+  ![](images/frontline-webhooks.png)
 
 
 #### 4. Configure Voice Integration
@@ -369,6 +406,8 @@ Follow the steps in [Deploy Blueprint Service](#deploy-blueprint-service)
   - In 'Configure With' dropdown, select `TwiML App`
   - In the 'TWIML APP' dropdown, select `Voice in Frontline`
   - Click ![](https://img.shields.io/badge/-Save-blue) at the bottom
+- Sample screen below
+  ![](images/frontline-voice.png)
 
 
 #### 5. Configure Frontline Mobile App
@@ -447,6 +486,56 @@ To terminate installer:
 - Enter Control-C in the terminal where `docker run ...` was executed; or
 - Stop the `hls-frontline-pharma-installer` docker container via the Docker Desktop
 
+
+---
+### Add User to Salesforce Account
+
+You can add a `user` to your (i.e., where you are the administrator) Salesforce account.
+The Salesforce developer account allows adding 1 (total of 2) users.
+
+
+#### 1. Login to Salesforce Account
+
+Login using your username to the Salesforce Account to add user to.
+The URL should end with `my.salesforce.com`
+
+
+#### 2. Create New User
+
+- From `Setup Home`, navigate to `ADMINISTRATION ⮕ Users ⮕ Users`
+<!-- https://**LIGHTNING_HOSTNAME**/lightning/setup/ManageUsers/home -->
+- Click ![](https://img.shields.io/badge/-New_User-blue)
+- In `New User` screen, enter the following:
+
+  |Field|Value|
+  |---:|---|
+  |First Name  |First name of new user
+  |Last Name   |Last name of new user
+  |Alias       |Assign any alias for new user
+  |Email       |Assign email for new user, making sure not to re-use previous used email<br/>Recommend using + email, e.g., bochoi+sf2@twilio.com
+  |Username    |Login username in email format (e.g., `bj@owlhealth.com`)<br/>*Make sure this is unique within the Salesforce account.*
+  |Nickanme    |Same as `Alias` above
+  |Role        |Select any role from dropdown
+  |User License|Select **Salesforce** from dropdown
+  |Profile     |Select **Standard User** from dropdown<br/>(call it **NEW_SALESFORCE_USERNAME**)
+
+- Verify new user email via your email client & set a password
+- Sample screen below
+  ![](images/salesforce-new-user.png)
+
+
+#### 3. Authorize New User for SSO
+
+- Open a terminal and cd to your `hls-frontline-pharma` folder
+- Execute the following script replacing **SALESFORCE_API_KEY** and **SALESFORCE_USERNAME** below with just created username
+
+  ```shell
+  sfdx auth:jwt:grant \
+  --clientid SALESFORCE_API_KEY \
+  --jwtkeyfile assets/server.private.key \
+  --username NEW_SALESFORCE_USERNAME \
+  --setdefaultdevhubusername --setalias NEW_SALESFORCE_USERNAME
+  ```
 
 
 ---
