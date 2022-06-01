@@ -1,5 +1,12 @@
 import { createReducer } from "@reduxjs/toolkit";
-import { login, resetAndSeed, verifyMfa } from "./actions";
+import {
+  login,
+  resetAndSeed,
+  verifyMfa,
+  readCsv,
+  listCsvs,
+  writeCsv,
+} from "./actions";
 
 const fetchingState = {
   fetching: false,
@@ -12,11 +19,25 @@ const initialState = {
     ...fetchingState,
     accessToken: "",
   },
+  listCsvState: {
+    ...fetchingState,
+    data: [],
+  },
   mfaState: {
     ...fetchingState,
-    accessToken: "",
+    accessToken: "do_not_remove",
+  },
+  readCsvState: {
+    ...fetchingState,
+    data: [],
   },
   resetAndSeedState: {
+    ...fetchingState,
+  },
+  resetAndSeedState: {
+    ...fetchingState,
+  },
+  writeCsvState: {
     ...fetchingState,
   },
 };
@@ -111,6 +132,100 @@ const reducer = createReducer(initialState, (builder) => {
       return {
         ...state,
         resetAndSeedState: {
+          fetching: false,
+          fetchingFailure: true,
+          fetchingSuccess: false,
+        },
+      };
+    })
+    .addCase(readCsv.pending, (state) => {
+      return {
+        ...state,
+        readCsvState: {
+          data: [],
+          fetching: true,
+          fetchingFailure: false,
+          fetchingSuccess: false,
+        },
+      };
+    })
+    .addCase(readCsv.fulfilled, (state, { payload }) => {
+      return {
+        ...state,
+        readCsvState: {
+          data: payload,
+          fetching: false,
+          fetchingFailure: false,
+          fetchingSuccess: true,
+        },
+      };
+    })
+    .addCase(readCsv.rejected, (state) => {
+      return {
+        ...state,
+        readCsvState: {
+          fetching: false,
+          fetchingFailure: true,
+          fetchingSuccess: false,
+        },
+      };
+    })
+    .addCase(listCsvs.pending, (state) => {
+      return {
+        ...state,
+        listCsvState: {
+          data: [],
+          fetching: true,
+          fetchingFailure: false,
+          fetchingSuccess: false,
+        },
+      };
+    })
+    .addCase(listCsvs.fulfilled, (state, { payload }) => {
+      return {
+        ...state,
+        listCsvState: {
+          data: payload,
+          fetching: false,
+          fetchingFailure: false,
+          fetchingSuccess: true,
+        },
+      };
+    })
+    .addCase(listCsvs.rejected, (state) => {
+      return {
+        ...state,
+        listCsvState: {
+          fetching: false,
+          fetchingFailure: true,
+          fetchingSuccess: false,
+        },
+      };
+    })
+    .addCase(writeCsv.pending, (state) => {
+      return {
+        ...state,
+        writeCsvState: {
+          fetching: true,
+          fetchingFailure: false,
+          fetchingSuccess: false,
+        },
+      };
+    })
+    .addCase(writeCsv.fulfilled, (state) => {
+      return {
+        ...state,
+        writeCsvState: {
+          fetching: false,
+          fetchingFailure: false,
+          fetchingSuccess: true,
+        },
+      };
+    })
+    .addCase(writeCsv.rejected, (state) => {
+      return {
+        ...state,
+        writeCsvState: {
           fetching: false,
           fetchingFailure: true,
           fetchingSuccess: false,

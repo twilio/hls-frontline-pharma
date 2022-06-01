@@ -7,6 +7,8 @@ const helperPath = Runtime.getFunctions()["helpers"].path;
 const { getParam } = require(helperPath);
 const sfdcAuthenticatePath =
   Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
+  const { path } = Runtime.getFunctions()["authentication-helper"];
+const { AuthedHandler } = require(path);
 const parseSObjectsPath = Runtime.getFunctions()["seeding/parsing"].path;
 const sobjectPath = Runtime.getFunctions()["seeding/sobject"].path;
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
@@ -24,7 +26,7 @@ const {
 } = require(sobjectPath);
 
 /** Reads Account, Contact, and Conversation data out of CSVs and parses them into SObject format, */
-exports.handler = async function (context, event, callback) {
+exports.handler = AuthedHandler( async (context, event, callback) => {
   const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
   const { connection } = sfdcConnectionIdentity;
 
@@ -165,7 +167,7 @@ exports.handler = async function (context, event, callback) {
   }
 
   return callback(null, response);
-};
+})
 
 exports.makeTemplateArray = async function (customerDetails) {
   try {

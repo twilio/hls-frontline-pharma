@@ -45,12 +45,16 @@ export const verifyMfa = createAsyncThunk(
 
 export const resetAndSeed = createAsyncThunk(
   "[Admin] Reset and Seed",
-  async (_params, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
+      const { token } = params;
       const reset = await fetch(
-        `https://${process.env.REACT_APP_BACKEND}/seeding/reset`,
+        `http://${process.env.REACT_APP_BACKEND}/seeding/reset`,
         {
           method: "POST",
+          body: new URLSearchParams({
+            token,
+          }),
         }
       );
 
@@ -58,15 +62,95 @@ export const resetAndSeed = createAsyncThunk(
         return rejectWithValue("Could not reset Salesforce data.");
 
       const seed = await fetch(
-        `https://${process.env.REACT_APP_BACKEND}/seeding/seed`,
+        `http://${process.env.REACT_APP_BACKEND}/seeding/seed`,
         {
           method: "POST",
+          body: new URLSearchParams({
+            token,
+          }),
         }
       );
 
       if (seed.error) return rejectWithValue("Could not seed Salesforce data.");
 
       return;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
+  }
+);
+
+export const writeCsv = createAsyncThunk(
+  "[Admin] Write CSV",
+  async (params, { getState, rejectWithValue }) => {
+    try {
+      const token = getState().app.mfaState.accessToken;
+      const { tableName, tableData } = params;
+      const data = await fetch(
+        `http://${process.env.REACT_APP_BACKEND}/seeding/edit`,
+        {
+          method: "POST",
+          body: new URLSearchParams({
+            cmd: "update",
+            name:tableName,
+            data: JSON.stringify(tableData),
+            token,
+          }),
+        }
+      ).then((resp) => resp.json());
+      if (data.error) return rejectWithValue("Could not write csv.");
+    } catch (err) {
+      return rejectWithValue(err);
+    }
+  }
+);
+
+export const readCsv = createAsyncThunk(
+  "[Admin] Read all CSVs",
+  async (params, { rejectWithValue, getState }) => {
+    try {
+      const token = getState().app.mfaState.accessToken;
+      const { files } = params;
+      const data = await fetch(
+        `http://${process.env.REACT_APP_BACKEND}/seeding/edit`,
+        {
+          method: "POST",
+          body: new URLSearchParams({
+            cmd: "read-all",
+            files,
+            token,
+          }),
+        }
+      )
+        .then((resp) => resp.json())
+        .then((resp) => resp.result);
+      if (data.error) return rejectWithValue("Could not get csvs.");
+      return data;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
+  }
+);
+
+export const listCsvs = createAsyncThunk(
+  "[Admin] List CSVs",
+  async (_params, { rejectWithValue, getState }) => {
+    try {
+      const token = getState().app.mfaState.accessToken;
+      const data = await fetch(
+        `http://${process.env.REACT_APP_BACKEND}/seeding/edit`,
+        {
+          method: "POST",
+          body: new URLSearchParams({
+            cmd: "list",
+            token,
+          }),
+        }
+      )
+        .then((resp) => resp.json())
+        .then((resp) => resp.result);
+      if (data.error) return rejectWithValue("Could not get csv.");
+      return data;
     } catch (err) {
       return rejectWithValue(err);
     }
