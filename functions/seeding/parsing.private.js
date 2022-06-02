@@ -1,6 +1,7 @@
 const col = require("lodash/collection");
+const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const moment = require("moment");
-const momentTimeZone = require('moment-timezone')
+const momentTimeZone = require("moment-timezone");
 const csvReader = require("csv-parser");
 const fs = require("fs");
 const seedingHelperPath = Runtime.getFunctions()["seeding/helpers"].path;
@@ -29,37 +30,23 @@ exports.readCsv = async function (filePath) {
 };
 
 /**
- * 
+ *
  * @param {*} fileName The output file name (i.e. 'mydata.csv')
  * @param {*} data The data object to write to the csv
  * @param {*} blacklist Optional array of keys to not write out to the csv
  */
-exports.writeCsv = async function (filePath, data, blacklist) {
-  const res = await new Promise((resolve, reject) => {
+exports.writeCsv = async function (path, data) {
 
-    const asArray = Object.entries(data)
-    const filtered = asArray.filter(([key, value]) => !blacklist.includes(key))
-    const filteredData = Object.fromEntries(filtered)
+  const header = Object.keys(data[0]).reduce((acc, curr) => {
+    return acc.concat({ id: curr, title: curr });
+  }, []);
 
-    const csvWriter = createCsvWriter({
-      path: Runtime.getFunctions()[`/${filePath}`],
-      header: [
-        { id: "name", title: "NAME" },
-        { id: "lang", title: "LANGUAGE" },
-      ],
-    });
-
-    const records = [
-      { name: "Bob", lang: "French, English" },
-      { name: "Mary", lang: "English" },
-    ];
-
-    const res = csvWriter
-      .writeRecords(records) // returns a promise
-      .then(() => {
-        console.log("...Done");
-      });
+  const csvWriter = createCsvWriter({
+    path,
+    header,
   });
+
+  return csvWriter.writeRecords(data); // returns a promise
 };
 
 /** Parses accounts from CSV and then adds an attributes field per Composite Api */
@@ -170,8 +157,8 @@ exports.parseChatHistory = function (csvData, contactsMap) {
           [
             prev,
             `[${curr.author} @ ${momentTimeZone
-          .tz(curr.date_created, "America/Los_Angeles")
-          .format("MM/DD/YYYY hh:mm A z")}]\n${curr.body}`,
+              .tz(curr.date_created, "America/Los_Angeles")
+              .format("MM/DD/YYYY hh:mm A z")}]\n${curr.body}`,
             index != group.length - 1 ? "\n\n" : "",
           ].join(""), //replace start/end quotations.
         ""
