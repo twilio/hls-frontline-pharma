@@ -1,7 +1,7 @@
 const { path } = Runtime.getFunctions()["authentication-helper"];
 const { AuthedHandler } = require(path);
 const parseSObjectsPath = Runtime.getFunctions()["seeding/parsing"].path;
-const { readCsv } = require(parseSObjectsPath);
+const { readCsv, writeCsv } = require(parseSObjectsPath);
 
 /**
  * File handles editing and updating of csv (templates)
@@ -26,7 +26,7 @@ exports.handler = AuthedHandler(async (context, event, callback) => {
         return callback(null, response);
       case "read-all":
         {
-          const files = event.files.split(',') //need to split urlencoded array back into js array
+          const files = event.files.split(","); //need to split urlencoded array back into js array
           const promises = files.map((file) =>
             readCsv(Runtime.getAssets()[`${file}`].path)
           );
@@ -52,6 +52,13 @@ exports.handler = AuthedHandler(async (context, event, callback) => {
         response.setBody({ error: false, result: csvs });
         return callback(null, response);
       }
+      case "update":
+        {
+          const {path} = Runtime.getAssets()[event.name]
+          await writeCsv(path, JSON.parse(event.data));
+          response.setBody({ error: false });
+          return callback(null, response);
+        }
       default: {
         console.log("No cmd provided in event.");
         break;
