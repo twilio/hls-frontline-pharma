@@ -3,9 +3,6 @@ const sfdcAuthenticatePath =
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
 const { path } = Runtime.getFunctions()["authentication-helper"];
 const { AuthedHandler } = require(path);
-const { twilioAuthenticatePath } =
-  Runtime.getFunctions()["authentication-helper"];
-const { isValidAppToken } = require(twilioAuthenticatePath);
 const staticPath = Runtime.getFunctions()["seeding/static"].path;
 const { customFields } = require(staticPath);
 const sObjectspath = Runtime.getFunctions()["seeding/sobject"].path;
