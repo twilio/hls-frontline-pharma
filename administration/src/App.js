@@ -7,12 +7,12 @@ import { useSelector } from "react-redux";
 import { mfaState as mfaStateSelector } from "./redux/selectors";
 
 function App() {
-  const { accessToken: mfaAccessToken } = useSelector(mfaStateSelector);
+  const { fetchingSuccess } = useSelector(mfaStateSelector);
 
   return (
     <>
       <Header />
-      {mfaAccessToken ? <Content /> : <Login />}
+      {fetchingSuccess ? <Content /> : <Login />}
       <Footer />
     </>
   );
