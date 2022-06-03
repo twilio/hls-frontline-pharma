@@ -65,7 +65,7 @@ exports.handler = AuthedHandler(async (context, event, callback) => {
       }
     }
   } catch (err) {
-    console.log(err);
+    console.error(err)
     response.setStatusCode(500);
     response.setBody({ error: true, errorObject: "Server Error." });
   }
