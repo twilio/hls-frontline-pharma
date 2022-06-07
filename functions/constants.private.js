@@ -77,8 +77,11 @@ const UNAPPROVED_WORDS = [
   "off-label prescribing",
 ];
 
+const STOP_MESSAGING = "stop communication with sales rep"
+
 module.exports = {
   SYNC_LIST_NAME,
   BLOCKED_WORDS,
   UNAPPROVED_WORDS,
+  STOP_MESSAGING,
 };

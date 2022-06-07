@@ -1,7 +1,7 @@
 const customFields = [
   {
     sObjectName: "Contact",
-    fields: ["Speciality", "Website", "Whatsapp"],
+    fields: ["Consent", "Speciality", "Website", "Whatsapp"],
   },
 ];
 

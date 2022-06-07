@@ -16,7 +16,7 @@ const opportunitiesSOQL = "SELECT Id FROM Opportunity LIMIT 200";
 const entitlementsSOQL = "SELECT Id FROM Entitlement LIMIT 200";
 
 /** Wipes SF account by deleting all default and custom Entitlements, Opportunities, Cases, Accounts, Contacts and custom fields. */
-exports.handler = AuthedHandler(async (context, event, callback)=> {
+exports.handler = async (context, event, callback)=> {
   const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
   const { connection } = sfdcConnectionIdentity;
 
@@ -80,4 +80,4 @@ exports.handler = AuthedHandler(async (context, event, callback)=> {
   }
 
   return callback(null, response);
-})
+}

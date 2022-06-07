@@ -26,7 +26,7 @@ const {
 } = require(sobjectPath);
 
 /** Reads Account, Contact, and Conversation data out of CSVs and parses them into SObject format, */
-exports.handler = AuthedHandler( async (context, event, callback) => {
+exports.handler =async (context, event, callback) => {
   const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
   const { connection } = sfdcConnectionIdentity;
 
@@ -167,7 +167,7 @@ exports.handler = AuthedHandler( async (context, event, callback) => {
   }
 
   return callback(null, response);
-})
+}
 
 exports.makeTemplateArray = async function (customerDetails) {
   try {

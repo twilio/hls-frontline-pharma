@@ -6,6 +6,7 @@ const {
   storeBlockedMessage,
 } = require(blockedContentPath);
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
+const { STOP_MESSAGING } = require(Runtime.getFunctions()["constants"].path);
 const moment = require("moment");
 const momentTimeZone = require("moment-timezone");
 
@@ -61,12 +62,34 @@ exports.handler = async function (context, event, callback) {
         response.setStatusCode(403);
         return callback(null, response);
       }
+      const customerDetails =
+        (await getCustomerByNumber(customerNumber, connection)) || {};
+
+      if (customerDetails?.consent && customerDetails.consent === "No") {
+        throw new Error("Customer does not consent to receiving messages.");
+      }
+
       const processedMessage = await processFrontlineMessage(event, response);
       if (processedMessage && processedMessage.success) {
         response.setBody(processedMessage);
+      } else if (
+        processedMessage?.error &&
+        processedMessage.errorObject &&
+        processedMessage.errorObject === STOP_MESSAGING
+      ) {
+        // change consent field on user
+        await updateCustomerConsent(
+          customerDetails.customer_id,
+          false,
+          connection
+        );
+      } else if (
+        processedMessage?.error &&
+        processedMessage.errorObject &&
+        processedMessage.errorObject === NO_CONSENT
+      ) {
+        throw new Error("Customer does not consent to text messages.");
       } else {
-        const customerDetails =
-          (await getCustomerByNumber(customerNumber, connection)) || {};
         await storeBlockedMessage(event, context, customerDetails);
         throw new Error("Message Body contains Blocked Word");
       }
@@ -218,6 +241,18 @@ const parseConversation = (convo, customerDetails) => {
   return description;
 };
 
+/**
+ * Update status of customer consent to retrieve messages.
+ * @param id The id of the customer to modify consent
+ * @param consent A boolean
+ * @param sfdcConn Salesforce connection object
+ */
+const updateCustomerConsent = async (id, consents, sfdcConn) => {
+  await sfdcConn
+    .sobject("Contact")
+    .update({ Id: id, Consent__c: consents ? "Yes" : "No" });
+};
+
 const getCustomerIdByName = async (name, sfdcConn) => {
   let sfdcRecords = [];
   try {
@@ -256,6 +291,7 @@ const getCustomerByNumber = async (number, sfdcConn) => {
           MobilePhone: number,
         },
         {
+          Consent__c: 1,
           Id: 1,
           Name: 1,
           MobilePhone: 1,
@@ -270,6 +306,7 @@ const getCustomerByNumber = async (number, sfdcConn) => {
     const sfdcRecord = sfdcRecords[0];
     return {
       display_name: sfdcRecord.Name,
+      consent: sfdcRecord.Consent__c,
       customer_id: sfdcRecord.Id,
       mobile_phone: sfdcRecord.MobilePhone,
     };

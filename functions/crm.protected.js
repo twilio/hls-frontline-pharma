@@ -58,6 +58,7 @@ exports.handler = async function (context, event, callback) {
   }
 };
 
+/** Gets consenting customers only. */
 const getCustomerDetailsByCustomerIdCallback = async (
   contactId,
   connection
@@ -69,6 +70,7 @@ const getCustomerDetailsByCustomerIdCallback = async (
       .sobject("Contact")
       .find(
         {
+          Consent__c: "Yes",
           Id: contactId,
         },
         {
@@ -121,6 +123,7 @@ const getCustomerDetailsByCustomerIdCallback = async (
   };
 };
 
+/** Gets consenting customers only. */
 const getCustomersList = async (workerIdentity, connection) => {
   let sfdcRecords = [];
   try {
@@ -129,6 +132,7 @@ const getCustomersList = async (workerIdentity, connection) => {
       .find(
         {
           "Owner.Username": workerIdentity,
+          Consent__c: "Yes"
         },
         {
           Id: 1,
