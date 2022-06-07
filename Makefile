@@ -1,14 +1,6 @@
-# description: Your Twilio account SID
-# required: true
-# configurable: false
-# format: text
-TWILIO_ACCOUNT_SID=AC034047d60669816878c8061a47f93e93
 
-# description: Your Twilio Auth Token
-# required: true
-# configurable: false
-# format: text
-TWILIO_AUTH_TOKEN=1edd48269d3b1249356b7b573b723604
+#TWILIO_ACCOUNT_SID=AC034047d60669816878c8061a47f93e93
+#TWILIO_AUTH_TOKEN=1edd48269d3b1249356b7b573b723604
 # --------------------------------------------------------------------------------------------------------------
 # FOR DEVELOPER USE ONLY!!!
 # --------------------------------------------------------------------------------------------------------------
@@ -143,6 +135,7 @@ run-serverless:
 tail-log: get-service-sid get-environment-sid
 	twilio serverless:logs --service-sid=$(SERVICE_SID) --environment=$(ENVIRONMENT_SID) --tail
 
+# ensure your backend is already running first before calling this!
 reset-and-seed: 
 	curl -X POST http://localhost:3000/seeding/reset
 	curl -X POST http://localhost:3000/seeding/seed

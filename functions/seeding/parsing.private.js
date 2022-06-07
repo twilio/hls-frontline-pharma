@@ -100,6 +100,7 @@ exports.parseContactsForCompositeApi = function (csvData, accountMap) {
       MailingCountry: record.MailingCountry,
       MailingPostalCode: record.MailingPostalCode,
       MailingState: record.MailingState,
+      Consent__c: "Yes",
       FirstName: record.FirstName,
       Languages__c: record.Languages,
       LastName: record.LastName,

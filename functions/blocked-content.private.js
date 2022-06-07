@@ -1,5 +1,5 @@
 const { getParam } = require(Runtime.getFunctions()["helpers"].path);
-const { SYNC_LIST_NAME, BLOCKED_WORDS } = require(Runtime.getFunctions()[
+const { SYNC_LIST_NAME, BLOCKED_WORDS, STOP_MESSAGING } = require(Runtime.getFunctions()[
   "constants"
 ].path);
 
@@ -16,6 +16,10 @@ const processFrontlineMessage = (event, response) => {
     // should not send message and report to supervisor
     response.setStatusCode(403);
     return "";
+  }
+  else if(allLower === STOP_MESSAGING.toLowerCase()){
+    response.setStatusCode(403)
+    return {error: true, errorObject: STOP_MESSAGING}  
   }
   response.setStatusCode(201);
   return { success: true, body: event.Body, author: event.Author };
