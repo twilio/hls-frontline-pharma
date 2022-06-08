@@ -31,12 +31,25 @@ async function _fetchSyncDocument(client, syncServiceSid, syncDocumentName) {
   return document; // will be 'undefined' is not found
 }
 
-async function listSyncDocuments(syncServiceSid, limit = 20) {
+async function listSyncDocuments(context, syncServiceSid, limit = 20) {
+  const client = context.getTwilioClient();
   const documents = await client.sync
     .services(syncServiceSid)
     .documents.list({ limit });
 
   return documents;
+}
+
+async function wipeSync(context, syncServiceSid) {
+  const docs = await listSyncDocuments(context, syncServiceSid);
+  console.log(docs);
+
+  if (docs.length > 0) {
+    const promises = docs.map((doc) =>
+      deleteSyncDocument(context, syncServiceSid, doc.uniqueName)
+    );
+    await Promise.all(promises);
+  }
 }
 
 /*
@@ -267,5 +280,6 @@ module.exports = {
   insertSyncMapItem,
   updateSyncMapItem,
   fetchPublicJsonAsset,
-  listSyncDocuments
+  listSyncDocuments,
+  wipeSync,
 };

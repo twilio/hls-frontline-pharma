@@ -7,7 +7,7 @@ const helperPath = Runtime.getFunctions()["helpers"].path;
 const { getParam } = require(helperPath);
 const sfdcAuthenticatePath =
   Runtime.getFunctions()["sf-auth/sfdc-authenticate"].path;
-  const { path } = Runtime.getFunctions()["authentication-helper"];
+const { path } = Runtime.getFunctions()["authentication-helper"];
 const { AuthedHandler } = require(path);
 const parseSObjectsPath = Runtime.getFunctions()["seeding/parsing"].path;
 const sobjectPath = Runtime.getFunctions()["seeding/sobject"].path;
@@ -19,14 +19,19 @@ const {
   parseTemplates,
   parseChatHistory,
 } = require(parseSObjectsPath);
-const { customFields } = require(staticPath);
+const { customFields, BLOCKED_WORDS, UNAPPROVED_WORDS } = require(staticPath);
 const {
   bulkUploadSObjects,
   addCustomFieldsAndPermissions,
 } = require(sobjectPath);
+const {
+  selectSyncDocument,
+  upsertSyncDocument,
+  wipeSync,
+} = require(Runtime.getFunctions()["datastore-helpers"].path);
 
 /** Reads Account, Contact, and Conversation data out of CSVs and parses them into SObject format, */
-exports.handler =async (context, event, callback) => {
+exports.handler = async (context, event, callback) => {
   const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
   const { connection } = sfdcConnectionIdentity;
 
@@ -39,6 +44,9 @@ exports.handler =async (context, event, callback) => {
   response.appendHeader("Access-Control-Allow-Origin", "*");
   response.setStatusCode(200);
   try {
+    const syncSid = await getParam(context, "SYNC_SID");
+    await resetAndSeedSync(context, syncSid);
+
     const endpoint = await getParam(context, "SFDC_INSTANCE_URL");
 
     const res = await addCustomFieldsAndPermissions(
@@ -86,6 +94,14 @@ exports.handler =async (context, event, callback) => {
       return callback(null, response);
     }
 
+    //upload accounts to sync, remove "attributes" property first
+    const syncAccounts = parsedAccounts.map(
+      ({ attributes, ...remainder }) => remainder
+    );
+    await upsertSyncDocument(context, syncSid, "Accounts", {
+      data: syncAccounts,
+    });
+
     //Map each Account to its id returned from SF
     const accountMap = accountsData.map((record, index) => {
       return {
@@ -126,6 +142,14 @@ exports.handler =async (context, event, callback) => {
       return callback(null, response);
     }
 
+    //upload accounts to sync, remove "attributes" property first
+    const syncContacts = parsedContacts.map(
+      ({ attributes, ...remainder }) => remainder
+    );
+    await upsertSyncDocument(context, syncSid, "Contacts", {
+      data: syncContacts,
+    });
+
     //Map the returned SF ids to their relevant contact
     const contactsMap = contactsData.map((record, index) => {
       return {
@@ -148,8 +172,6 @@ exports.handler =async (context, event, callback) => {
       true
     );
 
-    console.log(chatUploadResult);
-
     if (chatUploadResult.error) {
       response.setStatusCode(400);
       response.setBody({
@@ -157,6 +179,14 @@ exports.handler =async (context, event, callback) => {
         result: "An error occurred seeding chat data.",
       });
     }
+
+    //upload accounts to sync, remove "attributes" property first
+    const syncChat = chatHistory.map(
+      ({ attributes, ...remainder }) => remainder
+    );
+    await upsertSyncDocument(context, syncSid, "Chat", {
+      data: syncChat,
+    });
 
     response.setStatusCode(200);
     response.setBody({ error: false, result: "Succesfully seeded data." });
@@ -167,12 +197,14 @@ exports.handler =async (context, event, callback) => {
   }
 
   return callback(null, response);
-}
+};
 
 exports.makeTemplateArray = async function (customerDetails) {
   try {
-    const templatesData = await readCsv(templatesDataPath);
-    return parseTemplates(templatesData, customerDetails);
+    const syncSid = await getParam(context, "SYNC_SID");
+    const { data } = await selectSyncDocument(context, syncSid, "Templates");
+
+    return parseTemplates(data, customerDetails);
   } catch (err) {
     console.log(`Could not get templates, using defaults: ${err.message}`);
     return [
@@ -186,3 +218,37 @@ exports.makeTemplateArray = async function (customerDetails) {
     ];
   }
 };
+
+/** Adds blocked content, unapproved content, and templates to sync. Note: Accounts, Contacts and History are seeded elsewhere since they are interrelated. */
+async function resetAndSeedSync(context, syncSid) {
+  await wipeSync(context, syncSid);
+
+  const templates = await readCsv(templatesDataPath);
+
+  const addBlockedContentPromise = upsertSyncDocument(
+    context,
+    syncSid,
+    "BlockedWords",
+    { data: BLOCKED_WORDS }
+  );
+  const addUnapprovedContentPromise = upsertSyncDocument(
+    context,
+    syncSid,
+    "UnapprovedContent",
+    { data: UNAPPROVED_WORDS }
+  );
+  const addTemplatesPromise = upsertSyncDocument(
+    context,
+    syncSid,
+    "Templates",
+    { data: templates }
+  );
+
+  const promises = [
+    addBlockedContentPromise,
+    addUnapprovedContentPromise,
+    addTemplatesPromise,
+  ];
+
+  await Promise.all(promises);
+}
