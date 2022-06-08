@@ -20,6 +20,7 @@ This section details the requirements for a successful initial provisioning and 
 - [Deploy Frontline Serverless](#deploy-frontline-serverless)
 - [Configure Frontline SSO to Salesforce](#configure-frontline-sso-with-salesforce)
 - [Add User to Salesforce Account](#add-user-to-salesforce-account)
+- [Add Custom Fields to Contact Layout](#add-custom-fields-to-contact-layout)
 
 ---
 ### Prerequisites
@@ -421,8 +422,25 @@ Follow the steps in [Deploy Blueprint Service](#deploy-blueprint-service)
 - Login using **FRONTLINE_WORKSPACE_ID** (Frontline Workspace ID) and **SALESFORCE_USERNAME**
 - If logging in for the first time, email with subject 'Verify your identity in Salesforce'
   will be sent to your email used to sign up for Salesforce account above.
-
   
+### Add Custom Fields to Contact Layout
+
+- By default, Contacts to not have a field called "Consent"; this must be manually added to be seen in the Contact Details. 
+1. Click on Setup in the top right of Salesforce.
+2. On the left pane, click Objects and Fields > Object Manager.
+3. Click on Contact, then Page Layouts, then "Contact Layout".
+4. Drag "Consent" from the list of fields at the top of the page to the Contact Information section
+![img](https://i.imgur.com/nkywm9a.png)
+5. Hover over the Highlights Panel and a button with a wrench will appear on the right hand side; click this:
+![img](https://i.imgur.com/IkPbBzV.png)
+6. Select "Consent" from the dropdown menu titled "Top Field"
+![img](https://i.imgur.com/v9DlV0Z.png)
+7. Hit OK.
+8. Select the save button on the top left of the fields pane. 
+![img](https://i.imgur.com/6g1UQvm.png)
+
+*Note* It takes up to 10 minutes for the custom field attribute to become visible.  
+
 #### A. Common Problems/Errors:
 
 - **Outbound routing is not working:**
