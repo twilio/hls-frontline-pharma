@@ -12,7 +12,8 @@ function App() {
   return (
     <>
       <Header />
-      {fetchingSuccess ? <Content /> : <Login />}
+      {/*       {fetchingSuccess ? <Content /> : <Login />} */}
+      <Content />
       <Footer />
     </>
   );

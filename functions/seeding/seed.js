@@ -67,6 +67,7 @@ exports.handler = async (context, event, callback) => {
     //read csv data
     const accountsData = await readCsv(accountsDataPath);
     const contactsData = await readCsv(contactsDataPath);
+    const chatData = await readCsv(conversationDataPath);
 
     //parse csv data
     const parsedAccounts = parseAccountsForCompositeApi(accountsData);
@@ -93,14 +94,6 @@ exports.handler = async (context, event, callback) => {
       });
       return callback(null, response);
     }
-
-    //upload accounts to sync, remove "attributes" property first
-    const syncAccounts = parsedAccounts.map(
-      ({ attributes, ...remainder }) => remainder
-    );
-    await upsertSyncDocument(context, syncSid, "Accounts", {
-      data: syncAccounts,
-    });
 
     //Map each Account to its id returned from SF
     const accountMap = accountsData.map((record, index) => {
@@ -142,14 +135,6 @@ exports.handler = async (context, event, callback) => {
       return callback(null, response);
     }
 
-    //upload accounts to sync, remove "attributes" property first
-    const syncContacts = parsedContacts.map(
-      ({ attributes, ...remainder }) => remainder
-    );
-    await upsertSyncDocument(context, syncSid, "Contacts", {
-      data: syncContacts,
-    });
-
     //Map the returned SF ids to their relevant contact
     const contactsMap = contactsData.map((record, index) => {
       return {
@@ -159,7 +144,6 @@ exports.handler = async (context, event, callback) => {
     });
 
     //begin uploading conversation history
-    const chatData = await readCsv(conversationDataPath);
     const chatHistory = parseChatHistory(chatData, contactsMap);
 
     //Upload Contact SObjects to SF
@@ -180,13 +164,26 @@ exports.handler = async (context, event, callback) => {
       });
     }
 
-    //upload accounts to sync, remove "attributes" property first
+    //Begin uploading data to Sync
+    const syncAccounts = parsedAccounts.map(
+      ({ attributes, ...remainder }) => remainder
+    );
+    await upsertSyncDocument(context, syncSid, "Accounts_Template", {
+      data: syncAccounts,
+    });
+    const syncContacts = parsedContacts.map(
+      ({ attributes, ...remainder }) => remainder
+    );
+    await upsertSyncDocument(context, syncSid, "Contacts_Template", {
+      data: syncContacts,
+    });
     const syncChat = chatHistory.map(
       ({ attributes, ...remainder }) => remainder
     );
-    await upsertSyncDocument(context, syncSid, "Chat", {
+    await upsertSyncDocument(context, syncSid, "Chat_Template", {
       data: syncChat,
     });
+    //end uploading data to sync
 
     response.setStatusCode(200);
     response.setBody({ error: false, result: "Succesfully seeded data." });
@@ -199,14 +196,19 @@ exports.handler = async (context, event, callback) => {
   return callback(null, response);
 };
 
-exports.makeTemplateArray = async function (customerDetails) {
+exports.makeTemplateArray = async function (context, customerDetails) {
   try {
     const syncSid = await getParam(context, "SYNC_SID");
-    const { data } = await selectSyncDocument(context, syncSid, "Templates");
+    const { data } = await selectSyncDocument(
+      context,
+      syncSid,
+      "Templates_Template"
+    );
 
     return parseTemplates(data, customerDetails);
   } catch (err) {
     console.log(`Could not get templates, using defaults: ${err.message}`);
+    console.error(err)
     return [
       {
         display_name: "Meeting Reminders",
@@ -228,19 +230,19 @@ async function resetAndSeedSync(context, syncSid) {
   const addBlockedContentPromise = upsertSyncDocument(
     context,
     syncSid,
-    "BlockedWords",
+    "BlockedWords_List",
     { data: BLOCKED_WORDS }
   );
   const addUnapprovedContentPromise = upsertSyncDocument(
     context,
     syncSid,
-    "UnapprovedContent",
+    "UnapprovedContent_List",
     { data: UNAPPROVED_WORDS }
   );
   const addTemplatesPromise = upsertSyncDocument(
     context,
     syncSid,
-    "Templates",
+    "Templates_Template",
     { data: templates }
   );
 

@@ -4,7 +4,7 @@ export const login = createAsyncThunk(
   "[Auth] Login",
   async (pass, { rejectWithValue }) => {
     try {
-      const res = await fetch(`${window.location.origin}/authentication`, {
+      const res = await fetch(`${getBasePath()}/authentication`, {
         method: "POST",
         body: new URLSearchParams({ command: "login", password: pass }),
       })
@@ -23,7 +23,7 @@ export const verifyMfa = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       const { code, token } = params;
-      const res = await fetch(`${window.location.origin}/authentication`, {
+      const res = await fetch(`${getBasePath()}/authentication`, {
         method: "POST",
         body: new URLSearchParams({ command: "mfa", code, token }),
       })
@@ -42,7 +42,7 @@ export const resetAndSeed = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       const { token } = params;
-      const reset = await fetch(`${window.location.origin}/seeding/reset`, {
+      const reset = await fetch(`${getBasePath()}/seeding/reset`, {
         method: "POST",
         body: new URLSearchParams({
           token,
@@ -52,7 +52,7 @@ export const resetAndSeed = createAsyncThunk(
       if (reset.error)
         return rejectWithValue("Could not reset Salesforce data.");
 
-      const seed = await fetch(`${window.location.origin}/seeding/seed`, {
+      const seed = await fetch(`${getBasePath()}/seeding/seed`, {
         method: "POST",
         body: new URLSearchParams({
           token,
@@ -74,7 +74,7 @@ export const writeCsv = createAsyncThunk(
     try {
       const token = getState().app.mfaState.accessToken;
       const { tableName, tableData } = params;
-      const data = await fetch(`${window.location.origin}/seeding/edit`, {
+      const data = await fetch(`${getBasePath()}/seeding/edit`, {
         method: "POST",
         body: new URLSearchParams({
           cmd: "update",
@@ -96,7 +96,7 @@ export const readCsv = createAsyncThunk(
     try {
       const token = getState().app.mfaState.accessToken;
       const { files } = params;
-      const data = await fetch(`${window.location.origin}/seeding/edit`, {
+      const data = await fetch(`${getBasePath()}/seeding/edit`, {
         method: "POST",
         body: new URLSearchParams({
           cmd: "read-all",
@@ -119,7 +119,7 @@ export const listCsvs = createAsyncThunk(
   async (_params, { rejectWithValue, getState }) => {
     try {
       const token = getState().app.mfaState.accessToken;
-      const data = await fetch(`${window.location.origin}/seeding/edit`, {
+      const data = await fetch(`${getBasePath()}/seeding/edit`, {
         method: "POST",
         body: new URLSearchParams({
           cmd: "list",
@@ -135,3 +135,10 @@ export const listCsvs = createAsyncThunk(
     }
   }
 );
+
+const getBasePath = () => {
+  const origin = window.location.origin;
+  if (origin.includes("localhost") || origin.includes("file://"))
+    return "http://localhost:3000";
+  return origin;
+};

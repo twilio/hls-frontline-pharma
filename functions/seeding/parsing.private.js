@@ -123,9 +123,9 @@ exports.parseTemplates = function (csvData, customerDetails) {
         customerDetails.LastName || "LastName",
       ].join(" ");
       const msg = val.Message.replace(
-        "<title>",
+        "{{title}}",
         customerDetails.Title || "Title"
-      ).replace("<name>", name);
+      ).replace("{{name}}", name);
 
       return acc.concat({ content: msg });
     }, []);

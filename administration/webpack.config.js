@@ -8,7 +8,7 @@ dotenv.config()
 module.exports = {
   entry: path.resolve(__dirname, "./src/index.js"),
   output: {
-    path: path.resolve(__dirname, "."),
+    path: path.resolve(__dirname, "../assets/administration"),
     filename: "bundle.js",
   },
   resolve: {
