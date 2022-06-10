@@ -14,7 +14,7 @@ const { getParam } = require(helpersPath);
 /**
  * File handles editing and updating of csv (templates)
  */
-exports.handler = async (context, event, callback) => {
+exports.handler = AuthedHandler(async (context, event, callback) => {
   const response = new Twilio.Response();
   response.appendHeader("Content-Type", "application/json");
   response.appendHeader("Access-Control-Allow-Origin", "*");
@@ -68,4 +68,4 @@ exports.handler = async (context, event, callback) => {
   }
 
   return callback(null, response);
-};
+});

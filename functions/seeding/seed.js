@@ -27,25 +27,53 @@ const {
 const {
   selectSyncDocument,
   upsertSyncDocument,
-  wipeSync,
+  listSyncDocuments,
 } = require(Runtime.getFunctions()["datastore-helpers"].path);
 
-/** Reads Account, Contact, and Conversation data out of CSVs and parses them into SObject format, */
-exports.handler = async (context, event, callback) => {
+/**
+ * This will seed the Salesforce Frontline data. To seed Salesforce out of Twilio Sync, set event.type==="sync", otherwise, to seed from CSV data, set event.type==="reseed"
+ */
+exports.handler = AuthedHandler(async (context, event, callback) => {
   const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
   const { connection } = sfdcConnectionIdentity;
-
-  // Read data out of CSVs
-  // Parse CSVs into SF schema
-  // Upload
 
   const response = new Twilio.Response();
   response.appendHeader("Content-Type", "application/json");
   response.appendHeader("Access-Control-Allow-Origin", "*");
   response.setStatusCode(200);
   try {
+    if (!event.type) {
+      response.setStatusCode(400);
+      response.setBody({
+        error: true,
+        errorObject: "No event.type was set. Options are reseed, sync",
+      });
+      return callback(null, response);
+    }
+
     const syncSid = await getParam(context, "SYNC_SID");
-    await resetAndSeedSync(context, syncSid);
+
+    //guard against trying to sync Sync to SF and the documents dont exist
+    if (event.type === "sync") {
+      //async function listSyncDocuments(context, syncServiceSid, limit = 20) {
+      const docs = await listSyncDocuments(context, syncSid);
+      const docsExist =
+        docs.find((doc) => doc.uniqueName === "Accounts_Template") &&
+        docs.find((doc) => doc.uniqueName === "Contacts_Template") &&
+        docs.find((doc) => doc.uniqueName === "Chat_Template");
+
+      if (!docsExist) {
+        response.setStatusCode(400);
+        response.setBody({
+          error: true,
+          errorObject:
+            "Could not sync Twilio Sync and Salesforce since there are missing Sync documents.",
+        });
+        return callback(null, response);
+      }
+    }
+
+    if (event.type === "reseed") await partialSeedSync(context, syncSid);
 
     const endpoint = await getParam(context, "SFDC_INSTANCE_URL");
 
@@ -64,10 +92,20 @@ exports.handler = async (context, event, callback) => {
       return callback(null, response);
     }
 
-    //read csv data
-    const accountsData = await readCsv(accountsDataPath);
-    const contactsData = await readCsv(contactsDataPath);
-    const chatData = await readCsv(conversationDataPath);
+    const accountsData =
+      event.type === "reseed"
+        ? await readCsv(accountsDataPath)
+        : (await selectSyncDocument(context, syncSid, "Accounts_Template"))
+            .data;
+    const contactsData =
+      event.type === "reseed"
+        ? await readCsv(contactsDataPath)
+        : (await selectSyncDocument(context, syncSid, "Contacts_Template"))
+            .data;
+    const chatData =
+      event.type === "reseed"
+        ? await readCsv(conversationDataPath)
+        : (await selectSyncDocument(context, syncSid, "Chat_Template")).data;
 
     //parse csv data
     const parsedAccounts = parseAccountsForCompositeApi(accountsData);
@@ -86,6 +124,7 @@ exports.handler = async (context, event, callback) => {
       (accountUploadResult.result &&
         accountUploadResult.result.find((record) => !record.success))
     ) {
+      console.log(accountUploadResult);
       response.setStatusCode(400);
       response.setBody({
         error: true,
@@ -125,6 +164,7 @@ exports.handler = async (context, event, callback) => {
       (contactUploadResult.result &&
         contactUploadResult.result.find((record) => !record.success))
     ) {
+      console.log(contactUploadResult);
       response.setStatusCode(400);
       response.setBody({
         error: true,
@@ -157,6 +197,7 @@ exports.handler = async (context, event, callback) => {
     );
 
     if (chatUploadResult.error) {
+      console.log(chatUploadResult);
       response.setStatusCode(400);
       response.setBody({
         error: true,
@@ -164,26 +205,18 @@ exports.handler = async (context, event, callback) => {
       });
     }
 
-    //Begin uploading data to Sync
-    const syncAccounts = parsedAccounts.map(
-      ({ attributes, ...remainder }) => remainder
-    );
-    await upsertSyncDocument(context, syncSid, "Accounts_Template", {
-      data: syncAccounts,
-    });
-    const syncContacts = parsedContacts.map(
-      ({ attributes, ...remainder }) => remainder
-    );
-    await upsertSyncDocument(context, syncSid, "Contacts_Template", {
-      data: syncContacts,
-    });
-    const syncChat = chatHistory.map(
-      ({ attributes, ...remainder }) => remainder
-    );
-    await upsertSyncDocument(context, syncSid, "Chat_Template", {
-      data: syncChat,
-    });
-    //end uploading data to sync
+    //Upload data from a reseed to sync
+    if (event.type === "reseed") {
+      await upsertSyncDocument(context, syncSid, "Accounts_Template", {
+        data: accountsData,
+      });
+      await upsertSyncDocument(context, syncSid, "Contacts_Template", {
+        data: contactsData,
+      });
+      await upsertSyncDocument(context, syncSid, "Chat_Template", {
+        data: chatData,
+      });
+    }
 
     response.setStatusCode(200);
     response.setBody({ error: false, result: "Succesfully seeded data." });
@@ -194,7 +227,7 @@ exports.handler = async (context, event, callback) => {
   }
 
   return callback(null, response);
-};
+});
 
 exports.makeTemplateArray = async function (context, customerDetails) {
   try {
@@ -208,7 +241,7 @@ exports.makeTemplateArray = async function (context, customerDetails) {
     return parseTemplates(data, customerDetails);
   } catch (err) {
     console.log(`Could not get templates, using defaults: ${err.message}`);
-    console.error(err)
+    console.error(err);
     return [
       {
         display_name: "Meeting Reminders",
@@ -222,9 +255,7 @@ exports.makeTemplateArray = async function (context, customerDetails) {
 };
 
 /** Adds blocked content, unapproved content, and templates to sync. Note: Accounts, Contacts and History are seeded elsewhere since they are interrelated. */
-async function resetAndSeedSync(context, syncSid) {
-  await wipeSync(context, syncSid);
-
+async function partialSeedSync(context, syncSid) {
   const templates = await readCsv(templatesDataPath);
 
   const addBlockedContentPromise = upsertSyncDocument(

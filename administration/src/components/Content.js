@@ -4,23 +4,28 @@ import {
   listCsvs,
   readCsv,
   resetAndSeed as resetAndSeedAction,
+  syncWithSalesforce,
 } from "../redux/actions";
 import {
   listCsvState as listCsvStateSelector,
   mfaState as mfaStateSelector,
   readCsvState as readCsvStateSelector,
   resetAndSeedState as resetAndSeedStateSelector,
+  outOfSyncChangesState as outOfSyncChangesSelector,
+  syncSalesforceState as syncSalesforceStateSelector
 } from "../redux/selectors";
 import LoadingText from "./LoadingText";
 import Spreadsheet from "./Spreadsheet";
 import EditableTextarea from "./EditableTextarea";
 
-const Content = () => {
+const Content = ({onPageChange}) => {
   const dispatch = useDispatch();
   const resetAndSeedState = useSelector(resetAndSeedStateSelector);
   const mfaState = useSelector(mfaStateSelector);
   const listCsvState = useSelector(listCsvStateSelector);
   const readCsvState = useSelector(readCsvStateSelector);
+  const syncSalesforceState = useSelector(syncSalesforceStateSelector)
+  const outOfSyncChangesState = useSelector(outOfSyncChangesSelector)
 
   //get all available templates for editing
   useEffect(() => {
@@ -42,6 +47,14 @@ const Content = () => {
     (e) => {
       e.preventDefault();
       dispatch(resetAndSeedAction({ token: mfaState.accessToken }));
+    },
+    [dispatch]
+  );
+
+  const syncSalesforce = useCallback(
+    (e) => {
+      e.preventDefault();
+      dispatch(syncWithSalesforce({ token: mfaState.accessToken }));
     },
     [dispatch]
   );
@@ -103,28 +116,52 @@ const Content = () => {
     readCsvState.fetchingSuccess,
   ]);
 
+  const viewInsights = useCallback((e)=>{
+    e.preventDefault()
+    onPageChange()
+  }, [])
+
+  const syncWarningText = useMemo(()=>{
+    return `${outOfSyncChangesState} change${outOfSyncChangesState === 1 ? '' : 's'} not in sync with Salesforce. Press "Sync Data" to sync Twilio Sync with Salesforce.`
+  }, [outOfSyncChangesState])
+
+  const btnCss = useMemo(()=> {
+    return {
+      minWidth: 150
+    }
+  })
+
   return (
     <>
       <form>
-        <button id="btn-seed" className="button" onClick={resetAndSeed}>
+        <button id="btn-seed" className="button" onClick={resetAndSeed} style={{...btnCss}}>
           Seed Data
         </button>
         <div style={{ display: "inline-block", paddingLeft: 32 }}>
-          <p>Reset Salesforce account and Twilio Sync and seed data from scratch.</p>
-          <LoadingText fetchSelector={resetAndSeedState} name={"Seed Data"} />
+          <LoadingText
+            description="Reset Salesforce account and Twilio Sync and seed data from scratch"
+            fetchSelector={resetAndSeedState}
+            name={"Seed Data"}
+          />
         </div>
         <br />
-        <button id="btn-sync" className="button" onClick={undefined}>
+        <button id="btn-sync" className="button" onClick={syncSalesforce} style={{...btnCss}}>
           Sync Data
         </button>
         <div style={{ display: "inline-block", paddingLeft: 32 }}>
-          <p>Sync Twilio Sync with Salesforce</p>
           <LoadingText
-            fetchSelector={resetAndSeedState}
+            description="Sync Twilio Sync with Salesforce"
+            fetchSelector={syncSalesforceState}
             name={"Sync Data with Salesforce"}
           />
-        </div>
-        {/** TODO: Make this button work */}
+        </div><br/>
+        {outOfSyncChangesState > 0 && <div><span style={{color:"red"}}>{syncWarningText}</span><br/></div>}
+        <button id="btn-sync" className="button" onClick={viewInsights} style={{...btnCss}}>
+          Insights
+        </button>
+        <div style={{ display: "inline-block", paddingLeft: 32 }}>
+          <span>View insights dashboard.</span>
+        </div><br/>
       </form>
       <div>{spreadsheets}</div>
       <div>{editableTextareas}</div>

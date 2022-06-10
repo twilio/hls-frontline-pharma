@@ -6,6 +6,7 @@ import {
   readCsv,
   listCsvs,
   writeCsv,
+  syncWithSalesforce,
 } from "./actions";
 
 const fetchingState = {
@@ -14,7 +15,7 @@ const fetchingState = {
   fetchingFailure: false,
 };
 
-const initialState = {
+export const initialState = {
   loginState: {
     ...fetchingState,
     accessToken: "",
@@ -34,11 +35,12 @@ const initialState = {
   resetAndSeedState: {
     ...fetchingState,
   },
-  resetAndSeedState: {
+  syncSalesforceState: {
     ...fetchingState,
   },
   writeCsvState: {
     ...fetchingState,
+    outOfSyncChanges: 0,
   },
 };
 
@@ -126,6 +128,10 @@ const reducer = createReducer(initialState, (builder) => {
           fetchingFailure: false,
           fetchingSuccess: true,
         },
+        writeCsvState: {
+          ...state.writeCsvState,
+          outOfSyncChanges: 0,
+        },
       };
     })
     .addCase(resetAndSeed.rejected, (state) => {
@@ -206,19 +212,24 @@ const reducer = createReducer(initialState, (builder) => {
       return {
         ...state,
         writeCsvState: {
+          ...state.writeCsvState,
           fetching: true,
           fetchingFailure: false,
           fetchingSuccess: false,
         },
       };
     })
-    .addCase(writeCsv.fulfilled, (state) => {
+    .addCase(writeCsv.fulfilled, (state, { payload }) => {
       return {
         ...state,
         writeCsvState: {
           fetching: false,
           fetchingFailure: false,
           fetchingSuccess: true,
+          //only increment out of sync changes if what was edited was a template. 
+          outOfSyncChanges: payload.includes("_Template")
+            ? state.writeCsvState.outOfSyncChanges + 1
+            : state.writeCsvState.outOfSyncChanges,
         },
       };
     })
@@ -226,6 +237,42 @@ const reducer = createReducer(initialState, (builder) => {
       return {
         ...state,
         writeCsvState: {
+          ...state.writeCsvState,
+          fetching: false,
+          fetchingFailure: true,
+          fetchingSuccess: false,
+        },
+      };
+    })
+    .addCase(syncWithSalesforce.pending, (state) => {
+      return {
+        ...state,
+        syncSalesforceState: {
+          fetching: true,
+          fetchingFailure: false,
+          fetchingSuccess: false,
+        },
+      };
+    })
+    .addCase(syncWithSalesforce.fulfilled, (state) => {
+      console.log(state.writeCsvState.fetching);
+      return {
+        ...state,
+        syncSalesforceState: {
+          fetching: false,
+          fetchingFailure: false,
+          fetchingSuccess: true,
+        },
+        writeCsvState: {
+          ...state.writeCsvState,
+          outOfSyncChanges: 0,
+        },
+      };
+    })
+    .addCase(syncWithSalesforce.rejected, (state) => {
+      return {
+        ...state,
+        syncSalesforceState: {
           fetching: false,
           fetchingFailure: true,
           fetchingSuccess: false,

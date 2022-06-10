@@ -1,4 +1,4 @@
-import { createAsyncThunk, createAction } from "@reduxjs/toolkit";
+import { createAsyncThunk } from "@reduxjs/toolkit";
 
 export const login = createAsyncThunk(
   "[Auth] Login",
@@ -46,16 +46,18 @@ export const resetAndSeed = createAsyncThunk(
         method: "POST",
         body: new URLSearchParams({
           token,
+          type: "full",
         }),
       });
 
       if (reset.error)
-        return rejectWithValue("Could not reset Salesforce data.");
+        return rejectWithValue("Could not reset Salesforce/Sync data.");
 
       const seed = await fetch(`${getBasePath()}/seeding/seed`, {
         method: "POST",
         body: new URLSearchParams({
           token,
+          type: "reseed",
         }),
       });
 
@@ -84,6 +86,7 @@ export const writeCsv = createAsyncThunk(
         }),
       }).then((resp) => resp.json());
       if (data.error) return rejectWithValue("Could not write csv.");
+      return tableName
     } catch (err) {
       return rejectWithValue(err);
     }
@@ -130,6 +133,38 @@ export const listCsvs = createAsyncThunk(
         .then((resp) => resp.result);
       if (data.error) return rejectWithValue("Could not get csv.");
       return data;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
+  }
+);
+
+export const syncWithSalesforce = createAsyncThunk(
+  "[Admin] Sync Salesforce",
+  async (params, { rejectWithValue }) => {
+    try {
+      const { token } = params;
+      const reset = await fetch(`${getBasePath()}/seeding/reset`, {
+        method: "POST",
+        body: new URLSearchParams({
+          token,
+          type: "nosync",
+        }),
+      });
+
+      if (reset.error)
+        return rejectWithValue("Could not reset Salesforce data.");
+      const seed = await fetch(`${getBasePath()}/seeding/seed`, {
+        method: "POST",
+        body: new URLSearchParams({
+          token,
+          type: "sync",
+        }),
+      });
+
+      if (seed.error) return rejectWithValue("Could not sync Salesforce data.");
+
+      return;
     } catch (err) {
       return rejectWithValue(err);
     }

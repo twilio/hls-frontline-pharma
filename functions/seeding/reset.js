@@ -9,14 +9,19 @@ const sObjectspath = Runtime.getFunctions()["seeding/sobject"].path;
 const { deleteCustomFields, deleteRecords } = require(sObjectspath);
 const seedingHelperPath = Runtime.getFunctions()["seeding/helpers"].path;
 const { runSOQL } = require(seedingHelperPath);
+const { wipeSync } = require(Runtime.getFunctions()["datastore-helpers"].path);
+const helperPath = Runtime.getFunctions()["helpers"].path;
+const { getParam } = require(helperPath);
 const accountsSOQL = "SELECT Id FROM Account LIMIT 200";
 const contactsSOQL = "SELECT Id FROM Contact LIMIT 200";
 const casesSOQL = "SELECT Id FROM Case LIMIT 200";
 const opportunitiesSOQL = "SELECT Id FROM Opportunity LIMIT 200";
 const entitlementsSOQL = "SELECT Id FROM Entitlement LIMIT 200";
 
-/** Wipes SF account by deleting all default and custom Entitlements, Opportunities, Cases, Accounts, Contacts and custom fields. */
-exports.handler = async (context, event, callback)=> {
+/** Wipes SF account by deleting all default and custom Entitlements, Opportunities, Cases, Accounts, Contacts and custom fields.
+ * If the reset should not clear sync, please set event.type === "sync", otherwise, please set event.type to 'full'
+ */
+exports.handler = AuthedHandler( async (context, event, callback) => {
   const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
   const { connection } = sfdcConnectionIdentity;
 
@@ -26,7 +31,16 @@ exports.handler = async (context, event, callback)=> {
   response.setStatusCode(200);
 
   try {
-    
+    if (!event.type) {
+      response.setStatusCode(400);
+      response.setBody({
+        error: true,
+        errorObject:
+          "No type was set. Please set event.type to full if wanting to reset Salesforce and Sync or nosync to just reset Salesforce.",
+      });
+      return callback(null, response);
+    }
+
     const accounts = await runSOQL(connection, accountsSOQL);
     const contacts = await runSOQL(connection, contactsSOQL);
     const cases = await runSOQL(connection, casesSOQL);
@@ -45,30 +59,20 @@ exports.handler = async (context, event, callback)=> {
       deleteRecords(connection, "Opportunity", opportunitiesIds),
     ]);
 
-    const accountsDeletionResult = await deleteRecords(
-      connection,
-      "Account",
-      accountsIds
-    );
+    await deleteRecords(connection, "Account", accountsIds);
 
     /**
      * All contacts associated with the deleted accounts in the previous step will have been automatically deleted;
      * this step clears any contacts that do not have accounts assocaited with them.
      */
-    const contactsDeletionResult = await deleteRecords(
-      connection,
-      "Contact",
-      contactsIds
-    );
-
-    const numAccountsDeleted = accountsDeletionResult.filter(
-      (record) => record.success
-    );
-    const numContactsDeleted = contactsDeletionResult.filter(
-      (record) => record.success
-    );
+    await deleteRecords(connection, "Contact", contactsIds);
 
     await deleteCustomFields(connection, customFields);
+
+    if (event.type === "full") {
+      const syncSid = await getParam(context, "SYNC_SID");
+      await wipeSync(context, syncSid);
+    }
 
     response.setBody({
       error: false,
@@ -80,4 +84,4 @@ exports.handler = async (context, event, callback)=> {
   }
 
   return callback(null, response);
-}
+});
