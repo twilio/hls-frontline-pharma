@@ -67,6 +67,5 @@ exports.handler = AuthedHandler(async (context, event, callback) => {
     response.setStatusCode(500);
     response.setBody({ error: true, errorObject: "Server Error." });
   }
-
   return callback(null, response);
 });
