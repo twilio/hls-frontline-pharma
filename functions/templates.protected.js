@@ -14,7 +14,7 @@ exports.handler = async function (context, event, callback) {
       (await getCustomerById(event.Id, connection)) || {};
     switch (event.Location) {
       case "GetTemplatesByCustomerId": {
-        response.setBody(await makeTemplateArray(customerDetails));
+        response.setBody(await makeTemplateArray(context, customerDetails));
         break;
       }
       default: {

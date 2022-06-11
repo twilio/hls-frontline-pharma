@@ -1,6 +1,6 @@
 
-#TWILIO_ACCOUNT_SID=AC034047d60669816878c8061a47f93e93
-#TWILIO_AUTH_TOKEN=1edd48269d3b1249356b7b573b723604
+#TWILIO_ACCOUNT_SID=AC1d9eb55741133f27d367d8e8dd141722
+#TWILIO_AUTH_TOKEN=b7e1da90d21370c246cc7387c7b723eb
 # --------------------------------------------------------------------------------------------------------------
 # FOR DEVELOPER USE ONLY!!!
 # --------------------------------------------------------------------------------------------------------------
@@ -135,10 +135,13 @@ run-serverless:
 tail-log: get-service-sid get-environment-sid
 	twilio serverless:logs --service-sid=$(SERVICE_SID) --environment=$(ENVIRONMENT_SID) --tail
 
-# ensure your backend is already running first before calling this!
+# ensure your backend is already running first before calling this! Also disable Verify authentication.
 reset-and-seed: 
 	curl -X POST http://localhost:3000/seeding/reset
 	curl -X POST http://localhost:3000/seeding/seed
+
+make-service-editable: get-service-sid
+	twilio api:serverless:v1:services:update --sid=$(SERVICE_SID) --ui-editable -o=json
 
 
 create-rsa-private-key-n-ssl-cert:

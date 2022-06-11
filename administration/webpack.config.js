@@ -8,7 +8,7 @@ dotenv.config()
 module.exports = {
   entry: path.resolve(__dirname, "./src/index.js"),
   output: {
-    path: path.resolve(__dirname, "."),
+    path: path.resolve(__dirname, "../assets/administration"),
     filename: "bundle.js",
   },
   resolve: {
@@ -24,6 +24,10 @@ module.exports = {
       {
         test: /\.css$/i,
         use: ["style-loader", "css-loader"],
+      },
+      {
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        type: 'asset/resource',
       },
     ],
   },

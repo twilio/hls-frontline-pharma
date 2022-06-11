@@ -16,14 +16,15 @@ import { writeCsv } from "../redux/actions";
 const Spreadsheet = ({ data, name }) => {
   const dispatch = useDispatch();
   const readCsvState = useSelector(readCsvStateSelector);
-  const writeCsvState = useSelector(writeCsvStateSelector)
+  const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [activeCell, setActiveCell] = useState({});
   const [previousCell, setPreviousCell] = useState({});
+  const disclaimerText = "Press Escape to commit changes to Sync."
 
   const createHeaders = useCallback(
     (data) => {
       return (
-        <thead key="${name}-head">
+        <thead key={`${name}-head`}>
           <tr>
             {Object.keys(data[0]).map((header, index) => (
               <th key={`${name}-header${index}`}>{header}</th>
@@ -77,10 +78,10 @@ const Spreadsheet = ({ data, name }) => {
   useEffect(() => {
     if (activeCell.id) {
       const { id, table, text } = activeCell;
-      const inputId = "input".concat(id);
+      const inputId = "textarea".concat(id);
       document.getElementById(
         id
-      ).innerHTML = `<input id='${inputId}' value='${text}' />`;
+      ).innerHTML = `<textarea id='${inputId}' rows='4'>${text}</textarea>`;
 
       if (previousCell.id) {
         document.getElementById(
@@ -90,7 +91,7 @@ const Spreadsheet = ({ data, name }) => {
 
       //Controls what happens when enter key is pressed
       function onEnterUp(e) {
-        if (e.code === "Enter") {
+        if (e.code === "Escape") {
           const inputElement = document.getElementById(inputId);
           const newText = inputElement.value
           const cell = document.getElementById(id);
@@ -101,6 +102,7 @@ const Spreadsheet = ({ data, name }) => {
           });
           const data = updateData(table);
           dispatch(writeCsv({tableName: table, tableData: data}))
+          setShowDisclaimer(false)
         }
       }
 
@@ -121,6 +123,7 @@ const Spreadsheet = ({ data, name }) => {
             table: cellElement.closest("table").getAttribute("name"),
           };
         });
+        setShowDisclaimer(true)
       }
     };
 
@@ -162,6 +165,7 @@ const Spreadsheet = ({ data, name }) => {
       {data.length > 0 ? (
         <div>
           <h3>{name}</h3>
+          {showDisclaimer ? <span style={{color:"red"}}>{disclaimerText}</span> : <></>}
           <div style={{ height: 300, overflow: "scroll" }}>
             <table name={name}>{spreadSheet}</table>
           </div>

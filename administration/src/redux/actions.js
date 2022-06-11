@@ -1,10 +1,10 @@
-import { createAsyncThunk, createAction } from "@reduxjs/toolkit";
+import { createAsyncThunk } from "@reduxjs/toolkit";
 
 export const login = createAsyncThunk(
   "[Auth] Login",
   async (pass, { rejectWithValue }) => {
     try {
-      const res = await fetch(`${window.location.origin}/authentication`, {
+      const res = await fetch(`${getBasePath()}/authentication`, {
         method: "POST",
         body: new URLSearchParams({ command: "login", password: pass }),
       })
@@ -23,7 +23,7 @@ export const verifyMfa = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       const { code, token } = params;
-      const res = await fetch(`${window.location.origin}/authentication`, {
+      const res = await fetch(`${getBasePath()}/authentication`, {
         method: "POST",
         body: new URLSearchParams({ command: "mfa", code, token }),
       })
@@ -42,20 +42,22 @@ export const resetAndSeed = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       const { token } = params;
-      const reset = await fetch(`${window.location.origin}/seeding/reset`, {
+      const reset = await fetch(`${getBasePath()}/seeding/reset`, {
         method: "POST",
         body: new URLSearchParams({
           token,
+          type: "full",
         }),
       });
 
       if (reset.error)
-        return rejectWithValue("Could not reset Salesforce data.");
+        return rejectWithValue("Could not reset Salesforce/Sync data.");
 
-      const seed = await fetch(`${window.location.origin}/seeding/seed`, {
+      const seed = await fetch(`${getBasePath()}/seeding/seed`, {
         method: "POST",
         body: new URLSearchParams({
           token,
+          type: "reseed",
         }),
       });
 
@@ -74,7 +76,7 @@ export const writeCsv = createAsyncThunk(
     try {
       const token = getState().app.mfaState.accessToken;
       const { tableName, tableData } = params;
-      const data = await fetch(`${window.location.origin}/seeding/edit`, {
+      const data = await fetch(`${getBasePath()}/seeding/edit`, {
         method: "POST",
         body: new URLSearchParams({
           cmd: "update",
@@ -84,6 +86,7 @@ export const writeCsv = createAsyncThunk(
         }),
       }).then((resp) => resp.json());
       if (data.error) return rejectWithValue("Could not write csv.");
+      return tableName
     } catch (err) {
       return rejectWithValue(err);
     }
@@ -96,7 +99,7 @@ export const readCsv = createAsyncThunk(
     try {
       const token = getState().app.mfaState.accessToken;
       const { files } = params;
-      const data = await fetch(`${window.location.origin}/seeding/edit`, {
+      const data = await fetch(`${getBasePath()}/seeding/edit`, {
         method: "POST",
         body: new URLSearchParams({
           cmd: "read-all",
@@ -119,7 +122,7 @@ export const listCsvs = createAsyncThunk(
   async (_params, { rejectWithValue, getState }) => {
     try {
       const token = getState().app.mfaState.accessToken;
-      const data = await fetch(`${window.location.origin}/seeding/edit`, {
+      const data = await fetch(`${getBasePath()}/seeding/edit`, {
         method: "POST",
         body: new URLSearchParams({
           cmd: "list",
@@ -135,3 +138,42 @@ export const listCsvs = createAsyncThunk(
     }
   }
 );
+
+export const syncWithSalesforce = createAsyncThunk(
+  "[Admin] Sync Salesforce",
+  async (params, { rejectWithValue }) => {
+    try {
+      const { token } = params;
+      const reset = await fetch(`${getBasePath()}/seeding/reset`, {
+        method: "POST",
+        body: new URLSearchParams({
+          token,
+          type: "nosync",
+        }),
+      });
+
+      if (reset.error)
+        return rejectWithValue("Could not reset Salesforce data.");
+      const seed = await fetch(`${getBasePath()}/seeding/seed`, {
+        method: "POST",
+        body: new URLSearchParams({
+          token,
+          type: "sync",
+        }),
+      });
+
+      if (seed.error) return rejectWithValue("Could not sync Salesforce data.");
+
+      return;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
+  }
+);
+
+const getBasePath = () => {
+  const origin = window.location.origin;
+  if (origin.includes("localhost") || origin.includes("file://"))
+    return "http://localhost:3000";
+  return origin;
+};
