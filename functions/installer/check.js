@@ -27,6 +27,7 @@ exports.handler = async function (context, event, callback) {
     const application_url    = service_sid ? `https:/${environment_domain}/index.html` : null;
     const service_url        = service_sid ? `https://www.twilio.com/console/functions/api/start/${service_sid}` : null;
     const frontline_url      = service_sid ? 'https://www.twilio.com/console/frontline': null;
+    const administration_url    = service_sid ? `https:/${environment_domain}/administration/index.html` : null;
     let salesforce_url = null;
     if (service_sid) {
       const environment_sid = await getParam(context, 'ENVIRONMENT_SID');
@@ -43,6 +44,7 @@ exports.handler = async function (context, event, callback) {
       deploy_state: (service_sid) ? 'DEPLOYED' : 'NOT-DEPLOYED',
       service_sid: service_sid,
       application_url: application_url,
+      administration_url: administration_url,
       service_url: service_url,
       frontline_url: frontline_url,
       salesforce_url: salesforce_url,
