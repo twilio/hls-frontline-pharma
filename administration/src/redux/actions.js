@@ -1,4 +1,4 @@
-import { createAsyncThunk } from "@reduxjs/toolkit";
+import { createAction, createAsyncThunk } from "@reduxjs/toolkit";
 
 export const login = createAsyncThunk(
   "[Auth] Login",
@@ -170,6 +170,8 @@ export const syncWithSalesforce = createAsyncThunk(
     }
   }
 );
+
+export const accessTokenFromStorage = createAction('[Admin] Get Access Token from Localstorage')
 
 const getBasePath = () => {
   const origin = window.location.origin;

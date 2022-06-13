@@ -7,7 +7,11 @@ import {
   listCsvs,
   writeCsv,
   syncWithSalesforce,
+  accessTokenFromStorage,
 } from "./actions";
+import jwt_decode from "jwt-decode";
+
+const TOKEN_VAR_NAME = "HLS-Frontline-Token"
 
 const fetchingState = {
   fetching: false,
@@ -90,6 +94,7 @@ const reducer = createReducer(initialState, (builder) => {
       };
     })
     .addCase(verifyMfa.fulfilled, (state, { payload }) => {
+      localStorage.setItem(TOKEN_VAR_NAME, payload);
       return {
         ...state,
         mfaState: {
@@ -226,7 +231,7 @@ const reducer = createReducer(initialState, (builder) => {
           fetching: false,
           fetchingFailure: false,
           fetchingSuccess: true,
-          //only increment out of sync changes if what was edited was a template. 
+          //only increment out of sync changes if what was edited was a template.
           outOfSyncChanges: payload.includes("_Template")
             ? state.writeCsvState.outOfSyncChanges + 1
             : state.writeCsvState.outOfSyncChanges,
@@ -278,6 +283,23 @@ const reducer = createReducer(initialState, (builder) => {
           fetchingSuccess: false,
         },
       };
+    })
+    .addCase(accessTokenFromStorage, (state) => {
+      const token = localStorage.getItem(TOKEN_VAR_NAME);
+      if (token) {
+        const decoded = jwt_decode(token);
+        if (decoded.exp * 1000 > Date.now()) {
+          return {
+            ...state,
+            mfaState: {
+              fetching: false,
+              fetchingSuccess: true,
+              fetchingFailure: false,
+              accessToken: token,
+            },
+          };
+        }
+      }
     });
 });
 

@@ -12,20 +12,32 @@ import {
   readCsvState as readCsvStateSelector,
   resetAndSeedState as resetAndSeedStateSelector,
   outOfSyncChangesState as outOfSyncChangesSelector,
-  syncSalesforceState as syncSalesforceStateSelector
+  syncSalesforceState as syncSalesforceStateSelector,
 } from "../redux/selectors";
 import LoadingText from "./LoadingText";
 import Spreadsheet from "./Spreadsheet";
 import EditableTextarea from "./EditableTextarea";
+import { useNavigate } from "react-router-dom";
+import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
+import { Circles } from "react-loader-spinner";
 
-const Content = ({onPageChange}) => {
+const Content = () => {
   const dispatch = useDispatch();
   const resetAndSeedState = useSelector(resetAndSeedStateSelector);
   const mfaState = useSelector(mfaStateSelector);
   const listCsvState = useSelector(listCsvStateSelector);
   const readCsvState = useSelector(readCsvStateSelector);
-  const syncSalesforceState = useSelector(syncSalesforceStateSelector)
-  const outOfSyncChangesState = useSelector(outOfSyncChangesSelector)
+  const syncSalesforceState = useSelector(syncSalesforceStateSelector);
+  const outOfSyncChangesState = useSelector(outOfSyncChangesSelector);
+  const navigate = useNavigate();
+
+    /** Removes trailing "_Template" or "_List" suffixes. */
+    const cleanupNames = (name)=>{
+      if(name.includes("_")){
+        return name.substring(0, name.indexOf("_"))
+      }
+      return name
+    }
 
   //get all available templates for editing
   useEffect(() => {
@@ -76,7 +88,7 @@ const Content = ({onPageChange}) => {
           return (
             <div style={{ paddingTop: "2rem" }}>
               <Spreadsheet
-                name={Object.keys(csv)[0]}
+                name={cleanupNames(Object.keys(csv)[0])}
                 data={Object.values(csv)[0]}
               />
               <hr />
@@ -96,11 +108,10 @@ const Content = ({onPageChange}) => {
     if (readCsvState.fetchingSuccess && readCsvState.data.length > 0) {
       const res = readCsvState.data.map((csv) => {
         if (Object.keys(csv)[0].includes("List")) {
-          console.log(Object.keys(csv)[0]);
           return (
             <div style={{ paddingTop: "2rem" }}>
               <EditableTextarea
-                name={Object.keys(csv)[0]}
+                name={cleanupNames(Object.keys(csv)[0])}
                 data={Object.values(csv)[0]}
               />
               <hr />
@@ -116,25 +127,45 @@ const Content = ({onPageChange}) => {
     readCsvState.fetchingSuccess,
   ]);
 
-  const viewInsights = useCallback((e)=>{
-    e.preventDefault()
-    onPageChange()
-  }, [])
+  const viewInsights = useCallback((e) => {
+    e.preventDefault();
+    navigate("/dashboard");
+  }, []);
 
-  const syncWarningText = useMemo(()=>{
-    return `${outOfSyncChangesState} change${outOfSyncChangesState === 1 ? '' : 's'} not in sync with Salesforce. Press "Sync Data" to sync Twilio Sync with Salesforce.`
-  }, [outOfSyncChangesState])
+  const syncWarningText = useMemo(() => {
+    return `${outOfSyncChangesState} change${
+      outOfSyncChangesState === 1 ? "" : "s"
+    } not in sync with Salesforce. Press "Sync Data" to sync Twilio Sync with Salesforce.`;
+  }, [outOfSyncChangesState]);
 
-  const btnCss = useMemo(()=> {
+  const btnCss = useMemo(() => {
     return {
-      minWidth: 150
-    }
-  })
+      minWidth: 150,
+    };
+  });
+
+  const content = useMemo(() => {
+    return listCsvState.fetching || readCsvState.fetching ? (
+      <div style={{ display: "flex", justifyContent: "center", padding: 32 }}>
+        <Circles color="#9b4dca" height={80} width={80} />
+      </div>
+    ) : (
+      <div>
+        <div>{spreadsheets}</div>
+        <div>{editableTextareas}</div>
+      </div>
+    );
+  }, [spreadsheets, editableTextareas, listCsvState, readCsvState]);
 
   return (
     <>
       <form>
-        <button id="btn-seed" className="button" onClick={resetAndSeed} style={{...btnCss}}>
+        <button
+          id="btn-seed"
+          className="button"
+          onClick={resetAndSeed}
+          style={{ ...btnCss }}
+        >
           Seed Data
         </button>
         <div style={{ display: "inline-block", paddingLeft: 32 }}>
@@ -145,7 +176,12 @@ const Content = ({onPageChange}) => {
           />
         </div>
         <br />
-        <button id="btn-sync" className="button" onClick={syncSalesforce} style={{...btnCss}}>
+        <button
+          id="btn-sync"
+          className="button"
+          onClick={syncSalesforce}
+          style={{ ...btnCss }}
+        >
           Sync Data
         </button>
         <div style={{ display: "inline-block", paddingLeft: 32 }}>
@@ -154,17 +190,28 @@ const Content = ({onPageChange}) => {
             fetchSelector={syncSalesforceState}
             name={"Sync Data with Salesforce"}
           />
-        </div><br/>
-        {outOfSyncChangesState > 0 && <div><span style={{color:"red"}}>{syncWarningText}</span><br/></div>}
-        <button id="btn-sync" className="button" onClick={viewInsights} style={{...btnCss}}>
+        </div>
+        <br />
+        {outOfSyncChangesState > 0 && (
+          <div>
+            <span style={{ color: "red" }}>{syncWarningText}</span>
+            <br />
+          </div>
+        )}
+        <button
+          id="btn-sync"
+          className="button"
+          onClick={viewInsights}
+          style={{ ...btnCss }}
+        >
           Insights
         </button>
         <div style={{ display: "inline-block", paddingLeft: 32 }}>
           <span>View insights dashboard.</span>
-        </div><br/>
+        </div>
+        <br />
       </form>
-      <div>{spreadsheets}</div>
-      <div>{editableTextareas}</div>
+      {content}
     </>
   );
 };

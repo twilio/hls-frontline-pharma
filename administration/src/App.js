@@ -1,32 +1,48 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Login from "./components/Login";
 import Content from "./components/Content";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { mfaState as mfaStateSelector } from "./redux/selectors";
 import Insights from "./components/Insights";
-
-export const CONTENT_PAGE = 0;
-export const INSIGHTS_PAGE = 1;
+import { accessTokenFromStorage } from "./redux/actions";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 
 function App() {
-  const { fetchingSuccess } = useSelector(mfaStateSelector);
-  const [activePage, setActivePage] = useState(CONTENT_PAGE);
+  const { fetchingSuccess, fetchingFailure } = useSelector(mfaStateSelector);
+  const dispatch = useDispatch();
 
-  const loggedInView = useMemo(() => {
-    if (activePage === CONTENT_PAGE) {
-      return <Content onPageChange={() => setActivePage(INSIGHTS_PAGE)} />;
-    } else if (activePage === INSIGHTS_PAGE) {
-      return <Insights onPageChange={() => setActivePage(CONTENT_PAGE)} />;
+  useEffect(() => {
+    if (!fetchingSuccess || !fetchingFailure) {
+      dispatch(accessTokenFromStorage());
     }
-  }, [activePage]);
+  }, [fetchingFailure, fetchingSuccess]);
+
+
+  const content = useMemo(() => {
+    return (
+      <>
+        <Header />
+        {fetchingSuccess ? <Content /> : <Login />}
+        <Footer />
+      </>
+    );
+  }, [fetchingSuccess]);
 
   return (
     <>
-      <Header />
-      {fetchingSuccess ? loggedInView : <Login />}
-      <Footer />
+      <Router>
+        <Routes>
+          <Route path="/dashboard" element={<Insights />} />
+          <Route path="/" element={content} />
+        </Routes>
+      </Router>
     </>
   );
 }
