@@ -31,13 +31,13 @@ const Content = () => {
   const outOfSyncChangesState = useSelector(outOfSyncChangesSelector);
   const navigate = useNavigate();
 
-    /** Removes trailing "_Template" or "_List" suffixes. */
-    const cleanupNames = (name)=>{
-      if(name.includes("_")){
-        return name.substring(0, name.indexOf("_"))
-      }
-      return name
+  /** Removes trailing "_Template" or "_List" suffixes. */
+  const cleanupNames = (name) => {
+    if (name.includes("_")) {
+      return name.substring(0, name.indexOf("_"));
     }
+    return name;
+  };
 
   //get all available templates for editing
   useEffect(() => {
@@ -149,11 +149,15 @@ const Content = () => {
       <div style={{ display: "flex", justifyContent: "center", padding: 32 }}>
         <Circles color="#9b4dca" height={80} width={80} />
       </div>
-    ) : (
+    ) : readCsvState.fetchingSuccess && readCsvState.data.length > 0 ? (
       <div>
         <div>{spreadsheets}</div>
         <div>{editableTextareas}</div>
       </div>
+    ) : (
+      <span style={{ color: "orange" }}>
+        Your Salesforce account is not seeded.
+      </span>
     );
   }, [spreadsheets, editableTextareas, listCsvState, readCsvState]);
 
