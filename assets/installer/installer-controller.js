@@ -26,6 +26,7 @@ const UI = {
   service_open: '#service_open',
   frontline_open: '#frontline_open',
   salesforce_open: '#salesforce_open',
+  admin_open: '#admin_open',
 }
 
 
@@ -247,6 +248,7 @@ function checkDeployment() {
           $(UI.service_open).hide();
           $(UI.frontline_open).hide();
           $(UI.salesforce_open).hide();
+          $(UI.admin_open).hide();
           $(UI.app_deploy).show();
           $(UI.app_deploy).css('pointer-events', '');
           $(UI.app_redeploy).hide();
@@ -261,6 +263,8 @@ function checkDeployment() {
           $(UI.frontline_open).attr('href', response.frontline_url);
           $(UI.salesforce_open).show();
           $(UI.salesforce_open).attr('href', response.salesforce_url);
+          $(UI.admin_open).show();
+          $(UI.admin_open).attr('href', response.administration_url);
           $(UI.app_deploy).hide();
           $(UI.app_redeploy).show();
           $(UI.app_redeploy).css('pointer-events', '');
