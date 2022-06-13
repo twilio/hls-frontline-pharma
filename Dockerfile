@@ -16,6 +16,8 @@ COPY functions /hls-installer/functions
 # install node dependencies in package.json
 RUN npm install
 
+RUN apt-get update && apt-get install -y xsel
+
 # expose default port for running locally
 EXPOSE 3000
 
