@@ -8,10 +8,9 @@ import { mfaState as mfaStateSelector } from "./redux/selectors";
 import Insights from "./components/Insights";
 import { accessTokenFromStorage } from "./redux/actions";
 import {
-  BrowserRouter as Router,
+  HashRouter as Router,
   Routes,
   Route,
-  useLocation,
 } from "react-router-dom";
 
 function App() {
