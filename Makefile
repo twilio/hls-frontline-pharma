@@ -99,8 +99,10 @@ get-environment-sid: get-service-sid
 make-service-editable: get-service-sid
 	twilio api:serverless:v1:services:update --sid=$(SERVICE_SID) --ui-editable -o=json
 
+build-admin-page:
+	cd administration && npm run build-assets
 
-deploy-service:
+deploy-service: build-admin-page
 	rm -f .twiliodeployinfo
 	twilio serverless:deploy --runtime node14 --override-existing-project
 
