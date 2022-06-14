@@ -11,7 +11,7 @@ exports.handler = async function (context, event, callback) {
     const sfdcConnectionIdentity = await sfdcAuthenticate(context, null); // this is null due to no user context, default to env. var SF user
     const { connection } = sfdcConnectionIdentity;
     const customerDetails =
-      (await getCustomerById(event.Id, connection)) || {};
+      (await getCustomerById(event.CustomerId, connection)) || {};
     switch (event.Location) {
       case "GetTemplatesByCustomerId": {
         response.setBody(await makeTemplateArray(context, customerDetails));
@@ -31,7 +31,7 @@ exports.handler = async function (context, event, callback) {
 };
 
 async function getCustomerById(number, sfdcConn) {
-  console.log("Getting Customer details by #: ", number);
+  //console.log("Getting Customer details by #: ", number);
   let sfdcRecords = [];
   try {
     sfdcRecords = await sfdcConn
