@@ -508,6 +508,8 @@ To terminate installer:
 ---
 ### Add User to Salesforce Account
 
+**This is 100% optional if you want to add a 2nd user to your Salesforce account**
+
 You can add a `user` to your (i.e., where you are the administrator) Salesforce account.
 The Salesforce developer account allows adding 1 (total of 2) users.
 
