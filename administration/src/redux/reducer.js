@@ -8,10 +8,11 @@ import {
   writeCsv,
   syncWithSalesforce,
   accessTokenFromStorage,
+  fetchSupervisoryContent,
 } from "./actions";
 import jwt_decode from "jwt-decode";
 
-const TOKEN_VAR_NAME = "HLS-Frontline-Token"
+const TOKEN_VAR_NAME = "HLS-Frontline-Token";
 
 const fetchingState = {
   fetching: false,
@@ -38,6 +39,10 @@ export const initialState = {
   },
   resetAndSeedState: {
     ...fetchingState,
+  },
+  supervisoryState: {
+    ...fetchingState,
+    blockedContent: [],
   },
   syncSalesforceState: {
     ...fetchingState,
@@ -232,9 +237,10 @@ const reducer = createReducer(initialState, (builder) => {
           fetchingFailure: false,
           fetchingSuccess: true,
           //only increment out of sync changes if what was edited was a template, but not Templates_Template.
-          outOfSyncChanges: payload.includes("_Template") && !payload.includes("Templates")
-            ? state.writeCsvState.outOfSyncChanges + 1
-            : state.writeCsvState.outOfSyncChanges,
+          outOfSyncChanges:
+            payload.includes("_Template") && !payload.includes("Templates")
+              ? state.writeCsvState.outOfSyncChanges + 1
+              : state.writeCsvState.outOfSyncChanges,
         },
       };
     })
@@ -300,6 +306,38 @@ const reducer = createReducer(initialState, (builder) => {
           };
         }
       }
+    })
+    .addCase(fetchSupervisoryContent.pending, (state) => {
+      return {
+        ...state,
+        supervisoryState: {
+          fetching: true,
+          fetchingFailure: false,
+          fetchingSuccess: false,
+        },
+      };
+    })
+    .addCase(fetchSupervisoryContent.fulfilled, (state, { payload }) => {
+      console.log(payload);
+      return {
+        ...state,
+        supervisoryState: {
+          blockedContent: payload,
+          fetching: false,
+          fetchingFailure: false,
+          fetchingSuccess: true,
+        },
+      };
+    })
+    .addCase(fetchSupervisoryContent.rejected, (state) => {
+      return {
+        ...state,
+        supervisoryState: {
+          fetching: false,
+          fetchingFailure: true,
+          fetchingSuccess: false,
+        },
+      };
     });
 });
 

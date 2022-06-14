@@ -1,6 +1,7 @@
 import { createRef, useCallback, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  fetchSupervisoryContent,
   listCsvs,
   readCsv,
   resetAndSeed as resetAndSeedAction,
@@ -13,6 +14,7 @@ import {
   resetAndSeedState as resetAndSeedStateSelector,
   outOfSyncChangesState as outOfSyncChangesSelector,
   syncSalesforceState as syncSalesforceStateSelector,
+  blockedContentState as blockedContentSelector,
 } from "../redux/selectors";
 import LoadingText from "./LoadingText";
 import Spreadsheet from "./Spreadsheet";
@@ -20,6 +22,7 @@ import EditableTextarea from "./EditableTextarea";
 import { useNavigate } from "react-router-dom";
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import { Circles } from "react-loader-spinner";
+import Supervisory from "./Supervisory";
 
 const Content = () => {
   const dispatch = useDispatch();
@@ -29,6 +32,7 @@ const Content = () => {
   const readCsvState = useSelector(readCsvStateSelector);
   const syncSalesforceState = useSelector(syncSalesforceStateSelector);
   const outOfSyncChangesState = useSelector(outOfSyncChangesSelector);
+  const blockedContentState = useSelector(blockedContentSelector);
   const navigate = useNavigate();
 
   /** Removes trailing "_Template" or "_List" suffixes. */
@@ -80,6 +84,14 @@ const Content = () => {
     listCsvState.fetchingFailure,
     listCsvState.fetchingSuccess,
   ]);
+
+  useEffect(() => {
+    const { fetching, fetchingFailure, fetchingSuccess } = blockedContentState;
+
+    if (!fetching && !fetchingFailure && !fetchingSuccess) {
+      dispatch(fetchSupervisoryContent({ token: mfaState.accessToken }));
+    }
+  }, [blockedContentState]);
 
   const spreadsheets = useMemo(() => {
     if (readCsvState.fetchingSuccess && readCsvState.data.length > 0) {
@@ -145,7 +157,9 @@ const Content = () => {
   });
 
   const content = useMemo(() => {
-    return listCsvState.fetching || readCsvState.fetching ? (
+    return listCsvState.fetching ||
+      readCsvState.fetching ||
+      blockedContentState.fetching ? (
       <div style={{ display: "flex", justifyContent: "center", padding: 32 }}>
         <Circles color="#9b4dca" height={80} width={80} />
       </div>
@@ -153,6 +167,9 @@ const Content = () => {
       <div>
         <div>{spreadsheets}</div>
         <div>{editableTextareas}</div>
+        <div>
+          <Supervisory />
+        </div>
       </div>
     ) : (
       <span style={{ color: "orange" }}>
@@ -166,6 +183,7 @@ const Content = () => {
     readCsvState.fetchingSuccess,
     readCsvState.fetching,
     readCsvState.data,
+    blockedContentState.fetching,
   ]);
 
   return (

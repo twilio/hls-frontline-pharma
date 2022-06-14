@@ -6,3 +6,4 @@ export const listCsvState = (state)=>state.app.listCsvState
 export const syncSalesforceState = (state) => state.app.syncSalesforceState
 export const writeCsvState = (state) => state.app.writeCsvState
 export const outOfSyncChangesState = (state) => state.app.writeCsvState.outOfSyncChanges
+export const blockedContentState = (state) => state.app.supervisoryState

@@ -86,7 +86,7 @@ export const writeCsv = createAsyncThunk(
         }),
       }).then((resp) => resp.json());
       if (data.error) return rejectWithValue("Could not write csv.");
-      return tableName
+      return tableName;
     } catch (err) {
       return rejectWithValue(err);
     }
@@ -171,7 +171,31 @@ export const syncWithSalesforce = createAsyncThunk(
   }
 );
 
-export const accessTokenFromStorage = createAction('[Admin] Get Access Token from Localstorage')
+export const fetchSupervisoryContent = createAsyncThunk(
+  "[Admin] Fetch Supervisory Content",
+  async (params, { rejectWithValue }) => {
+    try {
+      const { token } = params;
+
+      const res = await fetch(`${getBasePath()}/blocked-content`, {
+        method: "POST",
+        body: new URLSearchParams({
+          token,
+        }),
+      }).then((resp)=>resp.json())
+      
+      if (res.error) return rejectWithValue("Could not get blocked content");
+
+      return res.result;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
+  }
+);
+
+export const accessTokenFromStorage = createAction(
+  "[Admin] Get Access Token from Localstorage"
+);
 
 const getBasePath = () => {
   const origin = window.location.origin;
