@@ -231,8 +231,8 @@ const reducer = createReducer(initialState, (builder) => {
           fetching: false,
           fetchingFailure: false,
           fetchingSuccess: true,
-          //only increment out of sync changes if what was edited was a template.
-          outOfSyncChanges: payload.includes("_Template")
+          //only increment out of sync changes if what was edited was a template, but not Templates_Template.
+          outOfSyncChanges: payload.includes("_Template") && !payload.includes("Templates")
             ? state.writeCsvState.outOfSyncChanges + 1
             : state.writeCsvState.outOfSyncChanges,
         },

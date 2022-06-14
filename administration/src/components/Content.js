@@ -159,7 +159,14 @@ const Content = () => {
         No Salesforce data detected. Select Seed Data to populate Salesforce.
       </span>
     );
-  }, [spreadsheets, editableTextareas, listCsvState, readCsvState, readCsvState.data]);
+  }, [
+    spreadsheets,
+    editableTextareas,
+    listCsvState.fetching,
+    readCsvState.fetchingSuccess,
+    readCsvState.fetching,
+    readCsvState.data,
+  ]);
 
   return (
     <>
