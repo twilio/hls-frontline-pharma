@@ -16,8 +16,8 @@ This section details the requirements for a successful initial provisioning and 
 - [Prerequsites](#prerequisites)
 - [Retrieve Latest Blueprint from Github](#retrieve-latest-blueprint-from-github)
 - [Provision Frontline Twilio Account](#provision-frontline-twilio-account)
-- [Provision Salesforce Account](#provision-salesforce-account)
 - [Deploy Frontline Serverless](#deploy-frontline-serverless)
+- [Provision Salesforce Account](#provision-salesforce-account)
 - [Configure Frontline SSO to Salesforce](#configure-frontline-sso-with-salesforce)
 - [Add User to Salesforce Account](#add-user-to-salesforce-account)
 - [Add Custom Fields to Contact Layout](#add-custom-fields-to-contact-layout)
@@ -144,6 +144,66 @@ Note that Flex service **CANNOT** be enabled on this Twilio account.
 - Note Realm SID (e.g., `JBccd16179731fe20736f887e6eXXXXXXX`)<br/>
   and save by executing `source ./configuration.sh FRONTLINE_REALM_SID`
 
+## Deploy Blueprint Service
+
+Frontline Twilio & Salesforce accounts must be already provisioned.
+
+Please ensure that you do not have any running processes
+that is listening on port `3000`
+such as development servers or another HLS installer still running.
+
+Make sure to increase the docker desktop memory from default 2GB to 6GB.
+
+#### 1. Build Installer Docker Image
+
+```shell
+docker build --tag hls-frontline-pharma-installer --no-cache .
+```
+
+If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.
+
+#### 2. Run Installer Docker Container
+
+Replace `${TWILIO_ACCOUNT_SID}` and `${TWILIO_AUTH_TOKEN}` with that of your target Twilio account.
+
+```shell
+docker run --name hls-frontline-pharma-installer --rm --publish 3000:3000  \
+--env ACCOUNT_SID=${TWILIO_ACCOUNT_SID} --env AUTH_TOKEN=${TWILIO_AUTH_TOKEN} \
+--interactive --tty hls-frontline-pharma-installer
+```
+
+If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.
+
+
+#### 3. Open installer in browser
+
+- Open http://localhost:3000/installer/index.html
+- Enter the following information:
+
+  |Field|Value|
+  |---:|---|
+  |Administrator|Your mobile phone number for receiving MFA in E.164 format
+  |Application Password|password for applciation administrator page access<br/>(recommend just using `password`)
+  |Sf Consumer Key|**SALESFORCE_API_KEY**
+  |Sf Username|**SALESFORCE_USERNAME**
+  |Sf Instance Url|**SALESFORCE_URL**<br/>(e.g., https\://twilio-b3-dev-ed.my.salesforce.com)
+
+- Click ![](https://img.shields.io/badge/-Deploy-blue) at the bottom and wait ...
+- When *'✔ Application is deployed'*, deployment is complete
+
+#### 4. Seed Salesforce Data
+
+In the installer, click the Administration button towards the bottom of the page to open up the Administration page. When the page opens, click the "Seed Data" button, and wait until the adjacent text says "SUCCESS". Refresh the page to see the data seeded into Salesforce.
+
+#### 5. Terminate installer
+
+To terminate installer:
+
+- Enter Control-C in the terminal where `docker run ...` was executed; or
+- Stop the `hls-frontline-pharma-installer` docker container via the Docker Desktop
+
+
+---
 
 ---
 ### Provision Salesforce Account
@@ -448,63 +508,6 @@ Follow the steps in [Deploy Blueprint Service](#deploy-blueprint-service)
 
 
 ---
----
-## Deploy Blueprint Service
-
-Frontline Twilio & Salesforce accounts must be already provisioned.
-
-Please ensure that you do not have any running processes
-that is listening on port `3000`
-such as development servers or another HLS installer still running.
-
-Make sure to increase the docker desktop memory from default 2GB to 6GB.
-
-#### 1. Build Installer Docker Image
-
-```shell
-docker build --tag hls-frontline-pharma-installer --no-cache .
-```
-
-If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.
-
-#### 2. Run Installer Docker Container
-
-Replace `${TWILIO_ACCOUNT_SID}` and `${TWILIO_AUTH_TOKEN}` with that of your target Twilio account.
-
-```shell
-docker run --name hls-frontline-pharma-installer --rm --publish 3000:3000  \
---env ACCOUNT_SID=${TWILIO_ACCOUNT_SID} --env AUTH_TOKEN=${TWILIO_AUTH_TOKEN} \
---interactive --tty hls-frontline-pharma-installer
-```
-
-If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.
-
-
-#### 3. Open installer in browser
-
-- Open http://localhost:3000/installer/index.html
-- Enter the following information:
-
-  |Field|Value|
-  |---:|---|
-  |Administrator|Your mobile phone number for receiving MFA in E.164 format
-  |Application Password|password for applciation administrator page access<br/>(recommend just using `password`)
-  |Sf Consumer Key|**SALESFORCE_API_KEY**
-  |Sf Username|**SALESFORCE_USERNAME**
-  |Sf Instance Url|**SALESFORCE_URL**<br/>(e.g., https\://twilio-b3-dev-ed.my.salesforce.com)
-
-- Click ![](https://img.shields.io/badge/-Deploy-blue) at the bottom and wait ...
-- When *'✔ Application is deployed'*, deployment is complete
-
-
-#### 4. Terminate installer
-
-To terminate installer:
-
-- Enter Control-C in the terminal where `docker run ...` was executed; or
-- Stop the `hls-frontline-pharma-installer` docker container via the Docker Desktop
-
-
 ---
 ### Add User to Salesforce Account
 
