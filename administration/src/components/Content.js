@@ -156,10 +156,10 @@ const Content = () => {
       </div>
     ) : (
       <span style={{ color: "orange" }}>
-        Your Salesforce account is not seeded.
+        No Salesforce data detected. Select Seed Data to populate Salesforce.
       </span>
     );
-  }, [spreadsheets, editableTextareas, listCsvState, readCsvState]);
+  }, [spreadsheets, editableTextareas, listCsvState, readCsvState, readCsvState.data]);
 
   return (
     <>

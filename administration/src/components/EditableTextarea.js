@@ -34,7 +34,7 @@ const EditableTextarea = ({ data, name }) => {
       if (e.code === "Escape") {
         const textarea = document.getElementById(name);
         const data = cleanupEditedTextarea(textarea.value)
-        dispatch(writeCsv({ tableName: name, tableData: data }));
+        dispatch(writeCsv({ tableName: `${name}_List`, tableData: data }));
         textarea.blur()
         setShowDisclaimer(false)
       }

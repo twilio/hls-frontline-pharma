@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   mfaState as mfaStateSelector,
   readCsvState as readCsvStateSelector,
-  writeCsvState as writeCsvStateSelector
+  writeCsvState as writeCsvStateSelector,
 } from "../redux/selectors";
 import "./Spreadsheet.css";
 import { writeCsv } from "../redux/actions";
@@ -16,10 +16,10 @@ import { writeCsv } from "../redux/actions";
 const Spreadsheet = ({ data, name }) => {
   const dispatch = useDispatch();
   const readCsvState = useSelector(readCsvStateSelector);
-  const [showDisclaimer, setShowDisclaimer] = useState(false)
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [activeCell, setActiveCell] = useState({});
   const [previousCell, setPreviousCell] = useState({});
-  const disclaimerText = "Press Escape to commit changes to Sync."
+  const disclaimerText = "Press Escape to commit changes to Sync.";
 
   const createHeaders = useCallback(
     (data) => {
@@ -52,7 +52,7 @@ const Spreadsheet = ({ data, name }) => {
     const values = document
       .getElementsByName(tableName)[0]
       .getElementsByTagName("tbody")[0]
-      .getElementsByTagName("tr"); 
+      .getElementsByTagName("tr");
 
     const valuesRows = Array.prototype.slice.call(values);
 
@@ -72,7 +72,7 @@ const Spreadsheet = ({ data, name }) => {
 
   /**
    * Handles what happens when a cell is clicked into.
-   * When clicked, the cell is converted into a text input. A method is bound to the window so that when "enter" is pressed, the table is updated 
+   * When clicked, the cell is converted into a text input. A method is bound to the window so that when "enter" is pressed, the table is updated
    * and the cell turns back to text.
    */
   useEffect(() => {
@@ -93,16 +93,18 @@ const Spreadsheet = ({ data, name }) => {
       function onEnterUp(e) {
         if (e.code === "Escape") {
           const inputElement = document.getElementById(inputId);
-          const newText = inputElement.value
+          const newText = inputElement.value;
           const cell = document.getElementById(id);
           cell.innerHTML = `${newText}`;
           setActiveCell((cell) => {
-            setPreviousCell({id: cell.id, table: cell.table, text: newText});
+            setPreviousCell({ id: cell.id, table: cell.table, text: newText });
             return {};
           });
           const data = updateData(table);
-          dispatch(writeCsv({tableName: table, tableData: data}))
-          setShowDisclaimer(false)
+          dispatch(
+            writeCsv({ tableName: `${table}_Template`, tableData: data })
+          );
+          setShowDisclaimer(false);
         }
       }
 
@@ -123,7 +125,7 @@ const Spreadsheet = ({ data, name }) => {
             table: cellElement.closest("table").getAttribute("name"),
           };
         });
-        setShowDisclaimer(true)
+        setShowDisclaimer(true);
       }
     };
 
@@ -165,7 +167,11 @@ const Spreadsheet = ({ data, name }) => {
       {data.length > 0 ? (
         <div>
           <h3>{name}</h3>
-          {showDisclaimer ? <span style={{color:"red"}}>{disclaimerText}</span> : <></>}
+          {showDisclaimer ? (
+            <span style={{ color: "red" }}>{disclaimerText}</span>
+          ) : (
+            <></>
+          )}
           <div style={{ height: 300, overflow: "scroll" }}>
             <table name={name}>{spreadSheet}</table>
           </div>
