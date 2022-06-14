@@ -37,10 +37,16 @@ const Supervisory = () => {
   return (
     <>
       <h3>Blocked Content Management</h3>
-      <table>
-        {header}
-        {body}
-      </table>
+      {blockedContent.length > 0 ? (
+        <>
+          <table>
+            {header}
+            {body}
+          </table>
+        </>
+      ) : (
+        <>There is no blocked content available.</>
+      )}
     </>
   );
 };

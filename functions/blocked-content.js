@@ -23,7 +23,7 @@ const handler = AuthedHandler(async (context, event, callback) => {
     const messageList = syncLists.find((l) => l.uniqueName === SYNC_LIST_NAME);
 
     if (!messageList) {
-      response.setBody({ data: [] });
+      response.setBody({ error: false, result: []});
       return callback(null, response);
     }
 

@@ -311,6 +311,7 @@ const reducer = createReducer(initialState, (builder) => {
       return {
         ...state,
         supervisoryState: {
+          blockedContent: [],
           fetching: true,
           fetchingFailure: false,
           fetchingSuccess: false,
@@ -333,6 +334,7 @@ const reducer = createReducer(initialState, (builder) => {
       return {
         ...state,
         supervisoryState: {
+          blockedContent: [],
           fetching: false,
           fetchingFailure: true,
           fetchingSuccess: false,
