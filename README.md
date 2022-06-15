@@ -157,7 +157,7 @@ Make sure to increase the docker desktop memory from default 2GB to 6GB.
 #### 1. Build Installer Docker Image
 
 ```shell
-docker build --tag hls-frontline-pharma-installer --no-cache .
+docker build --tag hls-frontline-pharma-installer --no-cache https://github.com/twilio/hls-frontline-pharma.git#main
 ```
 
 If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.
