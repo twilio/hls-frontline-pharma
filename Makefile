@@ -1,7 +1,3 @@
-
-
-TWILIO_ACCOUNT_SID=AC578470bbf082e83c31be416de3a1eeab
-TWILIO_AUTH_TOKEN=57af4eedcfc218668455122a614669a8
 # --------------------------------------------------------------------------------------------------------------
 # FOR DEVELOPER USE ONLY!!!
 # --------------------------------------------------------------------------------------------------------------
@@ -142,10 +138,6 @@ tail-log: get-service-sid get-environment-sid
 reset-and-seed: 
 	curl -X POST http://localhost:3000/seeding/reset
 	curl -X POST http://localhost:3000/seeding/seed
-
-make-service-editable: get-service-sid
-	twilio api:serverless:v1:services:update --sid=$(SERVICE_SID) --ui-editable -o=json
-
 
 create-rsa-private-key-n-ssl-cert:
 # reference: https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_auth_key_and_cert.htm
