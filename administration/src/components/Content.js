@@ -159,7 +159,9 @@ const Content = () => {
   const content = useMemo(() => {
     return listCsvState.fetching ||
       readCsvState.fetching ||
-      blockedContentState.fetching ? (
+      blockedContentState.fetching ||
+      resetAndSeedState.fetching ||
+      syncSalesforceState.fetching ? (
       <div style={{ display: "flex", justifyContent: "center", padding: 32 }}>
         <Circles color="#9b4dca" height={80} width={80} />
       </div>
@@ -184,6 +186,8 @@ const Content = () => {
     readCsvState.fetching,
     readCsvState.data,
     blockedContentState.fetching,
+    resetAndSeedState.fetching,
+    syncSalesforceState.fetching,
   ]);
 
   return (

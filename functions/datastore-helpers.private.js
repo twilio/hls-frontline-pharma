@@ -40,13 +40,30 @@ async function listSyncDocuments(context, syncServiceSid, limit = 20) {
   return documents;
 }
 
+async function listSyncLists(context, syncServiceSid) {
+  const client = context.getTwilioClient();
+  const lists = await client.sync.services(syncServiceSid).syncLists.list();
+  return lists;
+}
+
+async function deleteSyncList(context, syncServiceSid, list) {
+  const client = context.getTwilioClient();
+  await client.sync.services(syncServiceSid).syncLists(list.sid).remove();
+}
+
 async function wipeSync(context, syncServiceSid) {
   const docs = await listSyncDocuments(context, syncServiceSid);
-  console.log(docs);
+  const lists = await listSyncLists(context, syncServiceSid);
 
   if (docs.length > 0) {
     const promises = docs.map((doc) =>
       deleteSyncDocument(context, syncServiceSid, doc.uniqueName)
+    );
+    await Promise.all(promises);
+  }
+  if (lists.length > 0) {
+    const promises = lists.map((list) =>
+      deleteSyncList(context, syncServiceSid, list)
     );
     await Promise.all(promises);
   }

@@ -23,7 +23,7 @@ const handler = AuthedHandler(async (context, event, callback) => {
     const messageList = syncLists.find((l) => l.uniqueName === SYNC_LIST_NAME);
 
     if (!messageList) {
-      response.setBody({ error: false, result: []});
+      response.setBody({ error: false, result: [] });
       return callback(null, response);
     }
 
@@ -45,7 +45,7 @@ const handler = AuthedHandler(async (context, event, callback) => {
       errorObject: "Could not fetch supervisory content.",
     });
   }
-})
+});
 
 const isFrontlineWorker = (event) => {
   return event.ClientIdentity ? true : false;
@@ -70,36 +70,28 @@ const processFrontlineMessage = (event, response) => {
 
 const storeBlockedMessage = async (event, context, customerDetails) => {
   // event contains the message
-  try {
-    const client = context.getTwilioClient();
-    const syncSid = await getParam(context, "SYNC_SID");
-    const syncLists = await client.sync
-      .services(syncSid)
-      .syncLists.list()
-      .then((sl) => sl);
-    const messageList = syncLists.find((l) => l.uniqueName === SYNC_LIST_NAME);
-    if (!messageList) {
-      // create the syncList since it doesn't exist
-      messageList = await client.sync
+  const client = context.getTwilioClient();
+  const syncSid = await getParam(context, "SYNC_SID");
+  await client.sync
+    .services(syncSid)
+    .syncLists.create({ uniqueName: SYNC_LIST_NAME })
+    .then((sl) => SYNC_LIST_NAME)
+    .catch((err) => SYNC_LIST_NAME)
+    .then((sid) => {
+      console.log("SID", sid);
+      return client.sync
         .services(syncSid)
-        .syncLists.create({ uniqueName: SYNC_LIST_NAME })
-        .then((sl) => sl);
-    }
-    await client.sync
-      .services(syncSid)
-      .syncLists(SYNC_LIST_NAME)
-      .syncListItems.create({
-        data: {
-          agent: event.Author,
-          blockedMessage: event.Body,
-          conversationSid: event.ConversationSid,
-          customerNumber: customerDetails.mobile_phone,
-        },
-      })
-      .then((si) => console.log("New SyncItem Sid: ", si.sid));
-  } catch (err) {
-    console.error("storeBlockedMessage() Error:", err);
-  }
+        .syncLists(sid)
+        .syncListItems.create({
+          data: {
+            agent: event.Author,
+            blockedMessage: event.Body,
+            conversationSid: event.ConversationSid,
+            customerNumber: customerDetails.mobile_phone,
+          },
+        })
+        .then((si) => console.log("New SyncItem Sid: ", si));
+    });
 };
 
 module.exports = {

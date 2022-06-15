@@ -79,6 +79,7 @@ const getCustomerDetailsByCustomerIdCallback = async (
           Title: 1,
           MobilePhone: 1,
           "Account.Name": 1,
+          Speciality__c: 1,
         }
       )
       .limit(1)
@@ -116,7 +117,11 @@ const getCustomerDetailsByCustomerIdCallback = async (
         ],
         details: {
           title: "Information",
-          content: `${accountName} - ${sfdcRecord.Title}`,
+          content: `${accountName} - ${sfdcRecord.Title}${
+            sfdcRecord.Speciality__c
+              ? `\nSpeciality: ${sfdcRecord.Speciality__c}`
+              : ""
+          }`,
         },
       },
     },
@@ -132,7 +137,7 @@ const getCustomersList = async (workerIdentity, connection) => {
       .find(
         {
           "Owner.Username": workerIdentity,
-          Consent__c: "Yes"
+          Consent__c: "Yes",
         },
         {
           Id: 1,
