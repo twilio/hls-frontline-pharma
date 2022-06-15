@@ -6,7 +6,9 @@ const {
   storeBlockedMessage,
 } = require(blockedContentPath);
 const { sfdcAuthenticate } = require(sfdcAuthenticatePath);
-const { STOP_MESSAGING } = require(Runtime.getFunctions()["constants"].path);
+const { STOP_MESSAGING, BLOCKED, UNAPPROVED, NO_CONSENT } = require(Runtime.getFunctions()[
+  "constants"
+].path);
 const moment = require("moment");
 const momentTimeZone = require("moment-timezone");
 
@@ -66,10 +68,15 @@ exports.handler = async function (context, event, callback) {
         (await getCustomerByNumber(customerNumber, connection)) || {};
 
       if (customerDetails?.consent && customerDetails.consent === "No") {
+        response.setStatusCode(403)
         throw new Error("Customer does not consent to receiving messages.");
       }
 
-      const processedMessage = await processFrontlineMessage(event, response);
+      const processedMessage = await processFrontlineMessage(
+        context,
+        event,
+        response
+      );
       if (processedMessage && processedMessage.success) {
         response.setBody(processedMessage);
       } else if (
@@ -89,9 +96,19 @@ exports.handler = async function (context, event, callback) {
         processedMessage.errorObject === NO_CONSENT
       ) {
         throw new Error("Customer does not consent to text messages.");
-      } else {
+      } else if (
+        processedMessage?.error &&
+        processedMessage.errorObject &&
+        processedMessage.errorObject === BLOCKED
+      ) {
         await storeBlockedMessage(event, context, customerDetails);
         throw new Error("Message Body contains Blocked Word");
+      } else if (
+        processedMessage?.error &&
+        processedMessage.errorObject &&
+        processedMessage.errorObject === UNAPPROVED
+      ) {
+        throw new Error("Message Body contains Unapproved Content");
       }
     }
     case "onConversationStateUpdated": {

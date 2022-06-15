@@ -1,7 +1,10 @@
+const { selectSyncDocument } = require(Runtime.getFunctions()["datastore-helpers"].path);
+
 const { getParam } = require(Runtime.getFunctions()["helpers"].path);
 const {
   SYNC_LIST_NAME,
-  BLOCKED_WORDS,
+  UNAPPROVED,
+  BLOCKED,
   STOP_MESSAGING,
 } = require(Runtime.getFunctions()["constants"].path);
 const { path } = Runtime.getFunctions()["authentication-helper"];
@@ -51,21 +54,42 @@ const isFrontlineWorker = (event) => {
   return event.ClientIdentity ? true : false;
 };
 
-const processFrontlineMessage = (event, response) => {
-  const allLower = event.Body.toLowerCase();
-  const containsBlockedWord = !BLOCKED_WORDS.every(
-    (blockedWord) => !allLower.includes(blockedWord)
-  );
-  if (containsBlockedWord && isFrontlineWorker(event)) {
-    // should not send message and report to supervisor
-    response.setStatusCode(403);
-    return "";
-  } else if (allLower === STOP_MESSAGING.toLowerCase()) {
-    response.setStatusCode(403);
-    return { error: true, errorObject: STOP_MESSAGING };
+//async function selectSyncDocument(context, syncServiceSid, syncDocumentName) {
+const processFrontlineMessage = async (context, event, response) => {
+  try {
+    const syncSid = await getParam(context, "SYNC_SID");
+    const allLower = event.Body.toLowerCase();
+    const { data: blockedWords } = await selectSyncDocument(
+      context,
+      syncSid,
+      "BlockedWords_List"
+    );
+    const { data: unapprovedContent } = await selectSyncDocument(
+      context,
+      syncSid,
+      "UnapprovedContent_List"
+    );
+    const containsBlockedWord = !blockedWords.every(
+      (blockedWord) => !allLower.includes(blockedWord)
+    );
+    const containsUnapprovedContent = !unapprovedContent.every(
+      (unapproved) => !allLower.includes(unapproved)
+    );
+    if (containsBlockedWord && isFrontlineWorker(event)) {
+      response.setStatusCode(403);
+      return { error: true, errorObject: BLOCKED };
+    } else if (containsUnapprovedContent && isFrontlineWorker(event)) {
+      response.setStatusCode(403);
+      return { error: true, errorObject: UNAPPROVED };
+    } else if (allLower === STOP_MESSAGING.toLowerCase()) {
+      response.setStatusCode(403);
+      return { error: true, errorObject: STOP_MESSAGING };
+    }
+    response.setStatusCode(201);
+    return { success: true, body: event.Body, author: event.Author };
+  } catch (err) {
+    console.log(err);
   }
-  response.setStatusCode(201);
-  return { success: true, body: event.Body, author: event.Author };
 };
 
 const storeBlockedMessage = async (event, context, customerDetails) => {

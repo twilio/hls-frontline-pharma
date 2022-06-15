@@ -78,10 +78,14 @@ const UNAPPROVED_WORDS = [
 ];
 
 const STOP_MESSAGING = "stop communication with sales rep"
+const UNAPPROVED = "unapproved"
+const BLOCKED = "blocked"
 
 module.exports = {
   SYNC_LIST_NAME,
   BLOCKED_WORDS,
   UNAPPROVED_WORDS,
   STOP_MESSAGING,
+  UNAPPROVED,
+  BLOCKED
 };

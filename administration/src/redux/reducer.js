@@ -138,6 +138,9 @@ const reducer = createReducer(initialState, (builder) => {
           fetchingFailure: false,
           fetchingSuccess: true,
         },
+        supervisoryState: {
+          ...initialState.supervisoryState,
+        },
         writeCsvState: {
           ...state.writeCsvState,
           outOfSyncChanges: 0,
