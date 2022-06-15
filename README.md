@@ -430,7 +430,7 @@ Follow the steps in [Deploy Blueprint Service](#deploy-blueprint-service)
   |---:|---|
   |CRM Callback URL                   |https://**FRONTLINE_SERVICE_HOSTNAME**/crm
   |Outgoing Conversations Callback URL|https://**FRONTLINE_SERVICE_HOSTNAME**/outgoing-conversation
-  |Templates Callback URL             |https://**FRONTLINE_SERVICE_HOSTNAME**/template
+  |Templates Callback URL             |https://**FRONTLINE_SERVICE_HOSTNAME**/templates
 
 - Click ![](https://img.shields.io/badge/-Save-blue) button at the bottom
 - Sample screen below
