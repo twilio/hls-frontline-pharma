@@ -21,7 +21,9 @@ endif
 # ---------- variables
 APPLICATION_NAME := $(shell basename `pwd`)
 SERVICE_UNAME    := $(APPLICATION_NAME)
+VERSION          := $(shell jq --raw-output .version package.json)
 INSTALLER_NAME   := hls-frontline-pharma-installer
+INSTALLER_TAG    := twiliohls/$(INSTALLER_NAME):$(VERSION)
 GIT_REPO_URL     := $(shell git config --get remote.origin.url)
 CPU_HARDWARE     := $(shell uname -m)
 DOCKER_EMULATION := $(shell [[ `uname -m` == "arm64" ]] && echo --platform linux/amd64)
@@ -45,17 +47,24 @@ targets:
 
 installer-build-github:
 	$(eval BRANCH := $(shell if [[ -z "$(GIT_BRANCH)" ]]; then echo 'main'; else echo $(GIT_BRANCH); fi))
-	docker build --tag $(INSTALLER_NAME) $(DOCKER_EMULATION) --no-cache $(GIT_REPO_URL)#$(BRANCH)
+	docker build --tag $(INSTALLER_TAG) $(DOCKER_EMULATION) --no-cache $(GIT_REPO_URL)#$(BRANCH)
 
 
 installer-build-local:
-	docker build --tag $(INSTALLER_NAME) $(DOCKER_EMULATION) --no-cache .
+	docker build --tag $(INSTALLER_TAG) $(DOCKER_EMULATION) --no-cache .
+
+
+installer-push:
+	docker login --username twiliohls
+	docker push $(INSTALLER_TAG)
+	docker logout
+	open -a "Google Chrome" https://hub.docker.com/r/twiliohls/$(INSTALLER_NAME)
 
 
 installer-run:
 	docker run --name $(INSTALLER_NAME) --rm --publish 3000:3000 $(DOCKER_EMULATION) \
 	--env ACCOUNT_SID=$(TWILIO_ACCOUNT_SID) --env AUTH_TOKEN=$(TWILIO_AUTH_TOKEN) \
-	--interactive --tty $(INSTALLER_NAME)
+	--interactive --tty $(INSTALLER_TAG)
 
 
 installer-open:
@@ -97,8 +106,10 @@ get-environment-sid: get-service-sid
 make-service-editable: get-service-sid
 	twilio api:serverless:v1:services:update --sid=$(SERVICE_SID) --ui-editable -o=json
 
+
 build-admin-page:
 	cd administration && npm run build-assets
+
 
 deploy-service: build-admin-page
 	rm -f .twiliodeployinfo
@@ -139,9 +150,6 @@ tail-log: get-service-sid get-environment-sid
 reset-and-seed: 
 	curl -X POST http://localhost:3000/seeding/reset
 	curl -X POST http://localhost:3000/seeding/seed
-
-make-service-editable: get-service-sid
-	twilio api:serverless:v1:services:update --sid=$(SERVICE_SID) --ui-editable -o=json
 
 
 create-rsa-private-key-n-ssl-cert:
