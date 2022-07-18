@@ -71,6 +71,7 @@ const Content = () => {
     (e) => {
       e.preventDefault();
       dispatch(syncWithSalesforce({ token: mfaState.accessToken }));
+      dispatch(listCsvs()); //refreshes spreadsheets on page with what's in Sync
     },
     [dispatch]
   );
