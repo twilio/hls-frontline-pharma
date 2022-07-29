@@ -15,19 +15,20 @@ exports.handler = async function (context, event, callback) {
   const THIS = 'check:';
 
   const assert = require("assert");
-  const { getParam } = require(Runtime.getFunctions()['helpers'].path);
+  const { getParam, fetchVersionToDeploy } = require(Runtime.getFunctions()['helpers'].path);
 
   assert(context.DOMAIN_NAME.startsWith('localhost:'), `Can only run on localhost!!!`);
   console.time(THIS);
   try {
 
     // ---------- check service ----------------------------------------
-    const service_sid        = await getParam(context, 'SERVICE_SID');
-    const environment_domain = service_sid ? await getParam(context, 'ENVIRONMENT_DOMAIN') : null;
-    const application_url    = service_sid ? `https:/${environment_domain}/index.html` : null;
-    const service_url        = service_sid ? `https://www.twilio.com/console/functions/api/start/${service_sid}` : null;
-    const frontline_url      = service_sid ? 'https://www.twilio.com/console/frontline': null;
-    const administration_url    = service_sid ? `https:/${environment_domain}/administration/index.html` : null;
+    const service_sid         = await getParam(context, 'SERVICE_SID');
+    const application_version = await getParam(context, 'APPLICATION_VERSION');
+    const environment_domain  = service_sid ? await getParam(context, 'ENVIRONMENT_DOMAIN') : null;
+    const application_url     = service_sid ? `https:/${environment_domain}/index.html` : null;
+    const service_url         = service_sid ? `https://www.twilio.com/console/functions/api/start/${service_sid}` : null;
+    const frontline_url       = service_sid ? 'https://www.twilio.com/console/frontline': null;
+    const administration_url  = service_sid ? `https:/${environment_domain}/administration/index.html` : null;
     let salesforce_url = null;
     if (service_sid) {
       const environment_sid = await getParam(context, 'ENVIRONMENT_SID');
@@ -42,6 +43,10 @@ exports.handler = async function (context, event, callback) {
 
     const response = {
       deploy_state: (service_sid) ? 'DEPLOYED' : 'NOT-DEPLOYED',
+      version: {
+        deployed : application_version,
+        to_deploy: await fetchVersionToDeploy(),
+      },
       service_sid: service_sid,
       application_url: application_url,
       administration_url: administration_url,

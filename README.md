@@ -1,12 +1,9 @@
-
-# hls-frontline-pharma
+# HLS Frontline for Pharma
 
 - [Installation](#installation)
-- [Deploy Blueprint Service](#deploy-blueprint-service)
 - [Developer Notes](#developer-notes)
 
 
----
 ---
 
 ## Installation
@@ -47,6 +44,7 @@ After installation make sure to start Docker desktop.
 
 
 ---
+
 ### Retrieve Latest Blueprint from Github
 
 - If this is your first time installing this blueprint, open a terminal and execute the following:
@@ -144,6 +142,8 @@ Note that Flex service **CANNOT** be enabled on this Twilio account.
 - Note Realm SID (e.g., `JBccd16179731fe20736f887e6eXXXXXXX`)<br/>
   and save by executing `source ./configuration.sh FRONTLINE_REALM_SID`
 
+---
+
 ## Deploy Blueprint Service
 
 Frontline Twilio & Salesforce accounts must be already provisioned.
@@ -154,13 +154,13 @@ such as development servers or another HLS installer still running.
 
 Make sure to increase the docker desktop memory from default 2GB to 6GB.
 
-#### 1. Build Installer Docker Image
+#### 1. Remove Docker Image
+
+First, to ensure installation using the latest docker image, execute the following in your terminal window
 
 ```shell
-docker build --tag hls-frontline-pharma-installer --no-cache https://github.com/twilio/hls-frontline-pharma.git#main
+docker image rm twiliohls/hls-frontline-pharma-installer
 ```
-
-If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.
 
 #### 2. Run Installer Docker Container
 
@@ -169,7 +169,7 @@ Replace `${TWILIO_ACCOUNT_SID}` and `${TWILIO_AUTH_TOKEN}` with that of your tar
 ```shell
 docker run --name hls-frontline-pharma-installer --rm --publish 3000:3000  \
 --env ACCOUNT_SID=${TWILIO_ACCOUNT_SID} --env AUTH_TOKEN=${TWILIO_AUTH_TOKEN} \
---interactive --tty hls-frontline-pharma-installer
+--interactive --tty twiliohls/hls-frontline-pharma-installer
 ```
 
 If running on Apple Silicon (M1 chip), add `--platform linux/amd64` option.

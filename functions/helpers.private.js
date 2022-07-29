@@ -11,20 +11,16 @@
  * ----------------------------------------------------------------------------------------------------
  */
 const assert = require("assert");
+const path = require("path");
+const fs = require("fs");
 
 /* --------------------------------------------------------------------------------
  * retrieve environment variable value
  * --------------------------------------------------------------------------------
  */
 async function getParam(context, key) {
-  assert(
-    context.APPLICATION_NAME,
-    "undefined .env environment variable APPLICATION_NAME!!!"
-  );
-  assert(
-    context.CUSTOMER_NAME,
-    "undefined .env environment variable CUSTOMER_NAME!!!"
-  );
+  assert(context.APPLICATION_NAME, "undefined .env environment variable APPLICATION_NAME!!!");
+  assert(context.CUSTOMER_NAME, "undefined .env environment variable CUSTOMER_NAME!!!");
 
   if (
     key !== "SERVICE_SID" && // avoid warning
@@ -35,20 +31,35 @@ async function getParam(context, key) {
   }
 
   const client = context.getTwilioClient();
+  // ----------------------------------------------------------------------
   switch (key) {
-    case "SERVICE_SID": {
-      // always required
-      const services = await client.serverless.services.list();
-      const service = services.find(
-        (s) => s.friendlyName === context.APPLICATION_NAME
-      );
-
+    case "SERVICE_SID":
+    {
       // return sid only if deployed; otherwise null
+      const services = await client.serverless.services.list();
+      const service = services.find(s => s.friendlyName === context.APPLICATION_NAME);
+
       return service ? service.sid : null;
     }
 
-    case "ENVIRONMENT_SID": {
-      // always required
+    case 'APPLICATION_VERSION':
+    {
+      const service_sid = await getParam(context, 'SERVICE_SID');
+      if (service_sid === null) return null; // service not yet deployed, therefore return 'null'
+
+      const environment_sid = await getParam(context, 'ENVIRONMENT_SID');
+      const variables = await client.serverless
+        .services(service_sid)
+        .environments(environment_sid)
+        .variables.list();
+      const variable = variables.find(v => v.key === 'APPLICATION_VERSION');
+
+      return variable ? variable.value : null;
+    }
+
+    case "ENVIRONMENT_SID":
+    {
+      // return sid only if deployed; otherwise null
       const service_sid = await getParam(context, "SERVICE_SID");
       if (service_sid === null) return null; // service not yet deployed
 
@@ -59,8 +70,9 @@ async function getParam(context, key) {
       return environments.length > 0 ? environments[0].sid : null;
     }
 
-    case "ENVIRONMENT_DOMAIN": {
-      // always required
+    case "ENVIRONMENT_DOMAIN":
+    {
+      // return domain_name only if deployed; otherwise null
       const service_sid = await getParam(context, "SERVICE_SID");
       if (service_sid === null) return null; // service not yet deployed
 
@@ -68,10 +80,13 @@ async function getParam(context, key) {
         .services(service_sid)
         .environments.list({ limit: 1 });
 
-      return environments.length > 0 ? environments[0].domainName : null;
+      assert(environments && environments.length > 0, `error fetching environment for service_sid=${service_sid}!!!`);
+
+      return environments[0].domainName;
     }
 
-    case "VERIFY_SID": {
+    case "VERIFY_SID":
+    {
       const services = await client.verify.services.list();
       let service = services.find(
         (s) => s.friendlyName === context.APPLICATION_NAME
@@ -93,7 +108,8 @@ async function getParam(context, key) {
       return service.sid;
     }
 
-    case "SYNC_SID": {
+    case "SYNC_SID":
+    {
       const services = await client.sync.services.list();
       let service = services.find(
         (s) => s.friendlyName === context.APPLICATION_NAME
@@ -115,7 +131,8 @@ async function getParam(context, key) {
       return service.sid;
     }
 
-    case "CONVERSATIONS_SID": {
+    case "CONVERSATIONS_SID":
+    {
       const services = await client.conversations.services.list();
       let service = services.find(
         (s) => s.friendlyName === context.APPLICATION_NAME
@@ -224,9 +241,26 @@ async function setParam(context, key, value) {
   };
 }
 
+
+/* --------------------------------------------------------------------------------
+ * read version attribute from package.json
+ * --------------------------------------------------------------------------------
+ */
+async function fetchVersionToDeploy() {
+  const fs = require('fs');
+  const path = require('path');
+
+  const fpath = path.join(process.cwd(), 'package.json');
+  const payload = fs.readFileSync(fpath, 'utf8');
+  const json = JSON.parse(payload);
+
+  return json.version;
+}
+
 // --------------------------------------------------------------------------------
 module.exports = {
   getParam,
   setParam,
+  fetchVersionToDeploy,
   deprovisionParams,
 };
