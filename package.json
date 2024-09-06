@@ -8,19 +8,19 @@
     "deploy": "twilio-run deploy"
   },
   "dependencies": {
-    "@twilio-labs/serverless-api": "5.4.1",
+    "@twilio-labs/serverless-api": "5.4.3",
     "@twilio/runtime-handler": "1.2.3",
     "awesome-phonenumber": "3.0.1",
-    "axios": "0.27.2",
+    "axios": "1.6.8",
     "configure-env": "2.0.0-1",
     "csv-parser": "3.0.0",
     "jsforce": "1.11.0",
-    "jsonwebtoken": "8.5.1",
+    "jsonwebtoken": "9.0.2",
     "lodash": "4.17.21",
     "moment": "2.29.3",
-    "moment-timezone": "0.5.34",
+    "moment-timezone": "0.5.41",
     "react-router-dom": "6.3.0",
-    "twilio": "3.75.1"
+    "twilio": "5.0.4"
   },
   "devDependencies": {
     "twilio-run": "3.4.2"
